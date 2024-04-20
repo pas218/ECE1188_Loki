@@ -48,7 +48,8 @@ policies, either expressed or implied, of the FreeBSD Project.
 
 #include <stdint.h>
 #include "msp.h"
-#include "../inc/CortexM.h"
+#include "CortexM.h"
+#include "PWM.h"
 
 // *******Lab 13 solution*******
 
@@ -62,54 +63,17 @@ policies, either expressed or implied, of the FreeBSD Project.
 // Input: none
 // Output: none
 void Motor_Init(void){
-  
-    //configuration for left motor
-    //P5.4 to phase
-    P5->SEL0 &= ~(1UL<<4);
-    P5->SEL1 &= ~(1UL<<4);
-    P5->DIR |= 1UL<<4;
-    P5->REN |= 1UL<<4;
-    P5->DS |= ~(1UL<<4);
-    P5->OUT &= ~(1UL<<4);
-    //P2.7 to enable
-    P2->SEL0 &= ~(1UL<<7);
-    P2->SEL1 &= ~(1UL<<7);
-    P2->DIR |= 1UL<<7;
-    P2->REN |= 1UL<<7;
-    P2->DS |= ~(1UL<<7);
-    P2->OUT &= ~(1UL<<7);
-    //P3.7 to nSLEEP
-    P3->SEL0 &= ~(1UL<<7);
-    P3->SEL1 &= ~(1UL<<7);
-    P3->DIR |= 1UL<<7;
-    P3->REN |= 1UL<<7;
-    P3->DS |= ~(1UL<<7);
-    P3->OUT |= ~(1UL<<7);
+    P3 -> SEL0 &= ~0xC0;
+    P3 -> SEL1 &= ~0xC0;
+    P3 -> DIR |= 0xC0;
 
-    //configuration for right motor
+    P5 -> SEL0 &= ~0x30;
+    P5 -> SEL1 &= ~0x30;
+    P5 -> DIR |= 0x30;
 
-    //P5.5 to phase
-    P5->SEL0 &= ~(1UL<<5);
-    P5->SEL1 &= ~(1UL<<5);
-    P5->DIR |= 1UL<<5;
-    P5->REN |= 1UL<<5;
-    P5->DS |= ~(1UL<<5);
-    P5->OUT &= ~(1UL<<5);
-    //P2.7 to enable
-    P2->SEL0 &= ~(1UL<<6);
-    P2->SEL1 &= ~(1UL<<6);
-    P2->DIR |= 1UL<<6;
-    P2->REN |= 1UL<<6;
-    P2->DS |= ~(1UL<<6);
-    P2->OUT &= ~(1UL<<6);
-    //P3.6 to nSLEEP
-    P3->SEL0 &= ~(1UL<<6);
-    P3->SEL1 &= ~(1UL<<6);
-    P3->DIR |= 1UL<<6;
-    P3->REN |= 1UL<<6;
-    P3->DS |= ~(1UL<<6);
-    P3->OUT |= ~(1UL<<6);
+    P3 -> OUT |= 0xC0;
 
+    return;
 }
 
 // ------------Motor_Stop------------
@@ -118,13 +82,11 @@ void Motor_Init(void){
 // Input: none
 // Output: none
 void Motor_Stop(void){
-  
-    // Stops both motors, puts driver to sleep
-    // Returns right away
-    P1->OUT &= ~0xC0;
-    P2->OUT &= ~(0xC0);   // off
-    P3->OUT &= ~(0xC0);   // low current sleep mode
-
+    P5->OUT &= ~0x30;
+    P2->OUT &= ~0xC0;   // off
+    P3->OUT |= 0xC0;   // low current sleep mode
+    PWM_Init34(15000, 0, 0);
+    return;
 }
 
 // ------------Motor_Forward------------
@@ -135,34 +97,12 @@ void Motor_Stop(void){
 //        rightDuty duty cycle of right wheel (0 to 14,998)
 // Output: none
 // Assumes: Motor_Init() has been called
-void Motor_Forward(uint16_t leftDuty, uint16_t rightDuty){
-
-    P3->OUT |= 0xC0;   // take motors out of sleep mode
-
-    //set phase to forward
-    P5->OUT &= ~(1UL<<4);
-    P5->OUT &= ~(1UL<<5);
-
-    //TimerA1_Init( &Motor_Init, leftDuty);
-    //set up the PWM duty cycle
-    /*int high = duty, low = 10000-duty;
-    int i = 0;
-    while(i<time){
-        //H = PulseBuf[i];
-        //L = 10000 - H;
-        P2->OUT |= 1UL<<7; //left motor enable high
-        P2->OUT |= 1UL<<6; //right motor enable high
-        Clock_Delay1us(high);
-        P2->OUT &= ~(1UL<<7); //left motor enable low
-        P2->OUT &= ~(1UL<<6); //right motor enable low
-        Clock_Delay1us(low);
-
-        i = i + 1;
-    }
-
-    P3->OUT &= ~(0xC0);   // put motors into sleep mode*/
-
-  
+void Motor_Forward(uint16_t leftDuty, uint16_t rightDuty){ 
+    P3 -> OUT |= 0xC0;  // nSleep = 1
+    P5 -> OUT &= ~0x30; // PH = 0
+    PWM_Duty3(rightDuty);
+    PWM_Duty4(leftDuty);
+    return;
 }
 
 // ------------Motor_Right------------
@@ -174,8 +114,11 @@ void Motor_Forward(uint16_t leftDuty, uint16_t rightDuty){
 // Output: none
 // Assumes: Motor_Init() has been called
 void Motor_Right(uint16_t leftDuty, uint16_t rightDuty){ 
-  // write this as part of Lab 13
-
+    P3 -> OUT |= 0xC0;  // nSleep = 1
+    P5 -> OUT &= ~0x10; // P5.4 PH = 0
+    P5 -> OUT |= 0x20; // P5.5 PH = 1
+    PWM_Duty4(leftDuty);
+    PWM_Duty3(rightDuty);
 }
 
 // ------------Motor_Left------------
@@ -189,7 +132,15 @@ void Motor_Right(uint16_t leftDuty, uint16_t rightDuty){
 void Motor_Left(uint16_t leftDuty, uint16_t rightDuty){ 
   // write this as part of Lab 13
 
+    P3 -> OUT |= 0xC0;  // nSleep = 1
+    P5 -> OUT |= 0x10; // P5.4 PH = 1
+    P5 -> OUT &= ~0x20; // P5.5 PH = 0
+    PWM_Duty4(leftDuty);
+    PWM_Duty3(rightDuty);
+
 }
+
+
 
 // ------------Motor_Backward------------
 // Drive the robot backward by running left and
@@ -200,6 +151,9 @@ void Motor_Left(uint16_t leftDuty, uint16_t rightDuty){
 // Output: none
 // Assumes: Motor_Init() has been called
 void Motor_Backward(uint16_t leftDuty, uint16_t rightDuty){ 
-  // write this as part of Lab 13
-
+    P3 -> OUT |= 0xC0;  // nSleep = 1
+    P5 -> OUT |= 0x30; // PH = 1
+    PWM_Duty3(rightDuty);
+    PWM_Duty4(leftDuty);
+    return;
 }

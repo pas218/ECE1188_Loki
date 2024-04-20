@@ -97,8 +97,7 @@ void I2CB1_Send(uint8_t slaveAddr, uint8_t *pData, uint32_t length){
 // I2C master transmit mode
   EUSCI_B1->CTLW0 = (EUSCI_B1->CTLW0 & ~0x0004)|0x0012; // Master transmit, no stop, start condition
 //write the data
-  uint32_t i;
-  for(i = 0; i < length; i++){
+  for(uint32_t i = 0; i < length; i++){
     while((EUSCI_B1->IFG & 0x0002)==0){};// wait for UCTXIFG0
     EUSCI_B1->TXBUF = pData[i];
   }
@@ -116,8 +115,7 @@ void I2CB1_Recv(uint8_t slaveAddr, uint8_t *pData, uint16_t length){
   EUSCI_B1->CTLW0 &= ~0x0010; // UCTR=0, receive mode
   EUSCI_B1->CTLW0 |= 0x0002; // UCTXSTT=1, Master receive, start condition
 
-  int i;
-  for(i = 0; i < length; i++){
+  for(uint32_t i = 0; i < length; i++){
     if(i == length-1){
       EUSCI_B1->CTLW0 |= 0x0004;  // UCTXSTP=1, if this is the last byte, NACK and stop (must do this before byte is received?)
     }

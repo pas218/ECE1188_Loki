@@ -45,17 +45,17 @@ policies, either expressed or implied, of the FreeBSD Project.
 
 #include <stdint.h>
 #include "msp.h"
-#include "Clock.h"
-#include "I2CB1.h"
-#include "CortexM.h"
-#include "LPF.h"
-#include "opt3101.h"
-#include "LaunchPad.h"
-#include "Bump.h"
-#include "Motor.h"
-#include "UART0.h"
-#include "SSD1306.h"
-#include "FFT.h"
+#include "../inc/Clock.h"
+#include "../inc/I2CB1.h"
+#include "../inc/CortexM.h"
+#include "../inc/LPF.h"
+#include "../inc/opt3101.h"
+#include "../inc/LaunchPad.h"
+#include "../inc/Bump.h"
+#include "../inc/Motor.h"
+#include "../inc/UART0.h"
+#include "../inc/SSD1306.h"
+#include "../inc/FFT.h"
 // Select one of the following three output possibilities
 // define USENOKIA
 #define USEOLED 1
@@ -551,7 +551,7 @@ void main(void){ // wallFollow wall following implementation
   uint32_t channel = 1;
   DisableInterrupts();
   Clock_Init48MHz();
-  BumpInt_Init();
+  Bump_Init();
   LaunchPad_Init(); // built-in switches and LEDs
   Motor_Stop(); // initialize and stop
   Mode = 0;
@@ -744,8 +744,7 @@ void main4(void){ // main4 is DFT of left distance
     if(k == NN){
       UART0_OutString("OPT3101, fs=10Hz, N=");  UART0_OutUDec(NN);UART0_OutString(" samples\n");
       UART0_OutString("Time(ms),Distance(mm)\n");
-      int n;
-      for(n=0; n<NN; n++){
+      for(int n=0; n<NN; n++){
           UART0_OutUFix1(n); UART0_OutString(", ");
         int32_t data = (int32_t)a[n].Real;
         UART0_OutSDec(data);UART0_OutChar('\n');
@@ -758,8 +757,7 @@ void main4(void){ // main4 is DFT of left distance
       UART0_OutUFix2(0); UART0_OutString(", ");
       int32_t data = (int32_t)(100.0*sqrt(a[0].Real*a[0].Real+a[0].Imag*a[0].Imag)/(float)NN);
       UART0_OutUFix2(data);UART0_OutChar('\n');
-      //int n;
-      for(n=1; n<NN/2; n++){
+      for(int n=1; n<NN/2; n++){
         UART0_OutUFix2(1000*n/NN); UART0_OutString(", ");
         int32_t data = (int32_t)(100.0*sqrt(a[n].Real*a[n].Real+a[n].Imag*a[n].Imag)/(float)(NN/2));
         UART0_OutUFix2(data);UART0_OutChar('\n');

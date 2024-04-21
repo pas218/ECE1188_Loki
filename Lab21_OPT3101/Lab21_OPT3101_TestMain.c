@@ -456,7 +456,7 @@ int32_t Kp=4;  // proportional controller gain //was 4
 int32_t UR, UL;  // PWM duty 0 to 14,998
 
 #define TOOCLOSE 200 //was 200
-#define DESIRED 250 //was 250
+#define DESIRED 300 //was 250
 int32_t SetPoint = 250; // mm //was 250
 int32_t LeftDistance,CenterDistance,RightDistance; // mm
 #define TOOFAR 400 // was 400
@@ -465,29 +465,33 @@ int32_t LeftDistance,CenterDistance,RightDistance; // mm
 #define SWING 2000 //was 1000
 #define PWMMIN (PWMNOMINAL-SWING)
 #define PWMMAX (PWMNOMINAL+SWING)
-void Controller(void){ // runs at 100 Hz
-  if(Mode){
-    if((LeftDistance>DESIRED)&&(RightDistance>DESIRED)){
-      SetPoint = (LeftDistance+RightDistance)/2;
-    }else{
-      SetPoint = DESIRED;
-    }
-    if(LeftDistance < RightDistance ){
-      Error = LeftDistance-SetPoint;
-    }else {
-      Error = SetPoint-RightDistance;
-    }
- //   UR = UR + Ki*Error;      // adjust right motor
-    UR = PWMNOMINAL+Kp*Error; // proportional control
-    UL = PWMNOMINAL-Kp*Error; // proportional control
-    if(UR < (PWMNOMINAL-SWING)) UR = PWMNOMINAL-SWING; // 3,000 to 7,000
-    if(UR > (PWMNOMINAL+SWING)) UR = PWMNOMINAL+SWING;
-    if(UL < (PWMNOMINAL-SWING)) UL = PWMNOMINAL-SWING; // 3,000 to 7,000
-    if(UL > (PWMNOMINAL+SWING)) UL = PWMNOMINAL+SWING;
-    Motor_Forward(UL,UR);
 
-  }
-}
+//void Controller(void){ // runs at 100 Hz
+//  if(Mode){
+//    if((LeftDistance>DESIRED)&&(RightDistance>DESIRED)){
+//      SetPoint = (LeftDistance+RightDistance)/2;
+//    }else{
+//      SetPoint = DESIRED;
+//    }
+//    if(LeftDistance < RightDistance ){
+//      Error = LeftDistance-SetPoint;
+//    }else {
+//      Error = SetPoint-RightDistance;
+//    }
+// //   UR = UR + Ki*Error;      // adjust right motor
+//    UR = PWMNOMINAL+Kp*Error; // proportional control
+//    UL = PWMNOMINAL-Kp*Error; // proportional control
+//    
+//    // PWMNOMINAL -> max duty cycle
+//    // SWING      -> offset 
+//    if(UR < (PWMNOMINAL-SWING)) UR = PWMNOMINAL-SWING; // 3,000 to 7,000
+//    if(UR > (PWMNOMINAL+SWING)) UR = PWMNOMINAL+SWING;
+//    if(UL < (PWMNOMINAL-SWING)) UL = PWMNOMINAL-SWING; // 3,000 to 7,000
+//    if(UL > (PWMNOMINAL+SWING)) UL = PWMNOMINAL+SWING;
+//    Motor_Forward(UL,UR);
+//
+//  }
+//}
 
 void Controller_Right(void){ // runs at 100 Hz
   if(Mode){
@@ -501,6 +505,9 @@ void Controller_Right(void){ // runs at 100 Hz
     }else {
       Error = SetPoint-RightDistance;
     }*/
+
+    // my thoughts
+
 
     Error = SetPoint-RightDistance;
     //UR = UR + Ki*Error;      // adjust right motor
@@ -546,12 +553,40 @@ void Pause(void){int i;
 
 }
 
+void Controller(void){ // runs at 100 Hz
+  if(Mode){
+    if((LeftDistance>DESIRED)&&(RightDistance>DESIRED)){
+      SetPoint = (LeftDistance+RightDistance)/2;
+    }else{
+      SetPoint = DESIRED;
+    }
+    if(LeftDistance < RightDistance ){
+      Error = LeftDistance-SetPoint;
+    }else {
+      Error = SetPoint-RightDistance;
+    }
+ //   UR = UR + Ki*Error;      // adjust right motor
+    UR = PWMNOMINAL+Kp*Error; // proportional control
+    UL = PWMNOMINAL-Kp*Error; // proportional control
+    
+    // PWMNOMINAL -> max duty cycle
+    // SWING      -> offset 
+    if(UR < (PWMNOMINAL-SWING)) UR = PWMNOMINAL-SWING; // 3,000 to 7,000
+    if(UR > (PWMNOMINAL+SWING)) UR = PWMNOMINAL+SWING;
+    if(UL < (PWMNOMINAL-SWING)) UL = PWMNOMINAL-SWING; // 3,000 to 7,000
+    if(UL > (PWMNOMINAL+SWING)) UL = PWMNOMINAL+SWING;
+    Motor_Forward(UL,UR);
+
+  }
+}
+
 void main(void){ // wallFollow wall following implementation
   int i = 0;
   uint32_t channel = 1;
   DisableInterrupts();
   Clock_Init48MHz();
   Bump_Init();
+  Motor_Init();
   LaunchPad_Init(); // built-in switches and LEDs
   Motor_Stop(); // initialize and stop
   Mode = 0;
@@ -618,7 +653,8 @@ void main(void){ // wallFollow wall following implementation
       OPT3101_StartMeasurementChannel(channel);
       i = i + 1;
     }
-    Controller_Right();
+//    Controller_Right();
+    Controller();
     if(i >= 100){
       i = 0;
       SetCursor(3, 5);

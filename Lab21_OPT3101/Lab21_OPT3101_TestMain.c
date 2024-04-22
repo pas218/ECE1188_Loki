@@ -56,6 +56,7 @@ policies, either expressed or implied, of the FreeBSD Project.
 #include "../inc/UART0.h"
 #include "../inc/SSD1306.h"
 #include "../inc/FFT.h"
+#include "../inc/Reflectance.h"
 // Select one of the following three output possibilities
 // define USENOKIA
 #define USEOLED 1
@@ -451,20 +452,27 @@ int Program21_1(void){ //Program21_1(void){ // example program 21.1, RSLK1.1
 // assumes track is 500mm
 int32_t Mode=0; // 0 stop, 1 run
 int32_t Error;
-int32_t Ki=1;  // integral controller gain
-int32_t Kp=4;  // proportional controller gain //was 4
-int32_t UR, UL;  // PWM duty 0 to 14,998
 
 #define TOOCLOSE 200 //was 200
-#define DESIRED 300 //was 250
+
 int32_t SetPoint = 250; // mm //was 250
 int32_t LeftDistance,CenterDistance,RightDistance; // mm
 #define TOOFAR 400 // was 400
 
-#define PWMNOMINAL 5000 // was 2500
-#define SWING 2000 //was 1000
+
 #define PWMMIN (PWMNOMINAL-SWING)
 #define PWMMAX (PWMNOMINAL+SWING)
+
+// ------------------------------------------------------
+//change constants
+int32_t Kp=18;  // proportional controller gain //was 18
+int32_t Ki=0;  // integral controller gain      //was 0
+int32_t Kd=3;  // derivtive controller gain     //was 1
+#define PWMNOMINAL 5000 // was 2500             //was 5000
+#define SWING 1000 //was 1000                   //was 1500
+#define DESIRED 250 //was 250
+int32_t UR, UL;  // PWM duty 0 to 14,998
+// ------------------------------------------------------
 
 //void Controller(void){ // runs at 100 Hz
 //  if(Mode){
@@ -481,9 +489,9 @@ int32_t LeftDistance,CenterDistance,RightDistance; // mm
 // //   UR = UR + Ki*Error;      // adjust right motor
 //    UR = PWMNOMINAL+Kp*Error; // proportional control
 //    UL = PWMNOMINAL-Kp*Error; // proportional control
-//    
+//
 //    // PWMNOMINAL -> max duty cycle
-//    // SWING      -> offset 
+//    // SWING      -> offset
 //    if(UR < (PWMNOMINAL-SWING)) UR = PWMNOMINAL-SWING; // 3,000 to 7,000
 //    if(UR > (PWMNOMINAL+SWING)) UR = PWMNOMINAL+SWING;
 //    if(UL < (PWMNOMINAL-SWING)) UL = PWMNOMINAL-SWING; // 3,000 to 7,000
@@ -553,6 +561,15 @@ void Pause(void){int i;
 
 }
 
+int32_t errorL;
+int32_t errorR;
+int32_t perrorL = 0;
+int32_t perrorR = 0;
+int32_t integralL;
+int32_t integralR;
+int32_t derL;
+int32_t derR;
+
 void Controller(void){ // runs at 100 Hz
   if(Mode){
     if((LeftDistance>DESIRED)&&(RightDistance>DESIRED)){
@@ -560,32 +577,56 @@ void Controller(void){ // runs at 100 Hz
     }else{
       SetPoint = DESIRED;
     }
-    if(LeftDistance < RightDistance ){
-      Error = LeftDistance-SetPoint;
-    }else {
-      Error = SetPoint-RightDistance;
-    }
- //   UR = UR + Ki*Error;      // adjust right motor
-    UR = PWMNOMINAL+Kp*Error; // proportional control
-    UL = PWMNOMINAL-Kp*Error; // proportional control
-    
+
+    //Calculate Error signals
+    errorL = DESIRED - LeftDistance;
+    errorR = DESIRED - RightDistance;
+
+    integralL += errorL;
+    integralR += errorR;
+    //        prevT = t;
+
+    derL = errorL - perrorL;
+    derR = errorR - perrorR;
+
+    perrorL = errorL;
+    perrorR = errorR;
+
+    UL = PWMNOMINAL + (Kp *errorL) + (Ki * integralL) + (Kd * derL);
+    UR = PWMNOMINAL + (Kp *errorR) + (Ki * integralR) + (Kd * derR);
+
+//    // if it is too L = 100 and R = 200
+//    if(LeftDistance < RightDistance ){
+//      Error = LeftDistance-SetPoint; // 100 - 250 = -150
+//    }else {
+//      Error = SetPoint-RightDistance;
+//    }
+// //   UR = UR + Ki*Error;      // adjust right motor
+//    UR = PWMNOMINAL+Kp*Error; // proportional control
+//    UL = PWMNOMINAL-Kp*Error; // proportional control
+
     // PWMNOMINAL -> max duty cycle
-    // SWING      -> offset 
+    // SWING      -> offset
     if(UR < (PWMNOMINAL-SWING)) UR = PWMNOMINAL-SWING; // 3,000 to 7,000
     if(UR > (PWMNOMINAL+SWING)) UR = PWMNOMINAL+SWING;
     if(UL < (PWMNOMINAL-SWING)) UL = PWMNOMINAL-SWING; // 3,000 to 7,000
     if(UL > (PWMNOMINAL+SWING)) UL = PWMNOMINAL+SWING;
+
+
     Motor_Forward(UL,UR);
 
   }
 }
 
+uint8_t previousReflectance = 0;
 void main(void){ // wallFollow wall following implementation
+  previousReflectance = 0;
   int i = 0;
   uint32_t channel = 1;
   DisableInterrupts();
   Clock_Init48MHz();
   Bump_Init();
+  UART0_Init();
   Motor_Init();
   LaunchPad_Init(); // built-in switches and LEDs
   Motor_Stop(); // initialize and stop
@@ -614,17 +655,36 @@ void main(void){ // wallFollow wall following implementation
   OPT3101_ArmInterrupts(&TxChannel, Distances, Amplitudes);
   TxChannel = 3;
   OPT3101_StartMeasurementChannel(channel);
+  Reflectance_Init();
   LPF_Init(100,8);
   LPF_Init2(100,8);
   LPF_Init3(100,8);
   UR = UL = PWMNOMINAL; //initial power
   Pause();
   EnableInterrupts();
+//  int16_t on = 1;
   while(1){
+    char command[10];
+
+//    UART0_InString(command, 9);
+
+
+
+
     if(Bump_Read()){ // collision
       Mode = 0;
       Motor_Stop();
       Pause();
+    }
+    if(Reflectance_Read(1000) == 0){
+        previousReflectance = 0;
+    }
+    else{
+        if(previousReflectance == 0){
+            Motor_Stop();
+            Pause();
+        }
+        previousReflectance = 1;
     }
     if(TxChannel <= 2){ // 0,1,2 means new data
       if(TxChannel==0){
@@ -653,6 +713,15 @@ void main(void){ // wallFollow wall following implementation
       OPT3101_StartMeasurementChannel(channel);
       i = i + 1;
     }
+//
+//    if(command[0] == 'S'){
+//        Motor_Stop();
+//        on = 0;
+//    }else if (command[0] == 'F' || on == 1) {
+//        Controller_Right();
+//        on = 1;
+//    }
+
 //    Controller_Right();
     Controller();
     if(i >= 100){

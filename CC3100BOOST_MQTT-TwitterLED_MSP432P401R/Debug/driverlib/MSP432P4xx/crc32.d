@@ -20,8 +20,8 @@ driverlib/MSP432P4xx/crc32.obj: C:/ti/ccs1260/ccs/ccs_base/arm/include/CMSIS/cor
 driverlib/MSP432P4xx/crc32.obj: C:/ti/ccs1260/ccs/ccs_base/arm/include/CMSIS/cmsis_compiler.h
 driverlib/MSP432P4xx/crc32.obj: C:/ti/ccs1260/ccs/ccs_base/arm/include/CMSIS/cmsis_ccs.h
 driverlib/MSP432P4xx/crc32.obj: C:/ti/ccs1260/ccs/ccs_base/arm/include/system_msp432p401r.h
-driverlib/MSP432P4xx/crc32.obj: C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/driverlib/MSP432P4xx/debug.h
-driverlib/MSP432P4xx/crc32.obj: C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/driverlib/MSP432P4xx/hw_memmap.h
+driverlib/MSP432P4xx/crc32.obj: C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/driverlib/MSP432P4xx/debug.h
+driverlib/MSP432P4xx/crc32.obj: C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/driverlib/MSP432P4xx/hw_memmap.h
 
 ../driverlib/MSP432P4xx/crc32.c:
 
@@ -63,7 +63,7 @@ C:/ti/ccs1260/ccs/ccs_base/arm/include/CMSIS/cmsis_ccs.h:
 
 C:/ti/ccs1260/ccs/ccs_base/arm/include/system_msp432p401r.h:
 
-C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/driverlib/MSP432P4xx/debug.h:
+C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/driverlib/MSP432P4xx/debug.h:
 
-C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/driverlib/MSP432P4xx/hw_memmap.h:
+C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/driverlib/MSP432P4xx/hw_memmap.h:
 

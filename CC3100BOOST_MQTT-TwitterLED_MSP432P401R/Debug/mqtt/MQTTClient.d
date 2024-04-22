@@ -18,8 +18,8 @@ mqtt/MQTTClient.obj: C:/ti/ccs1260/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/incl
 mqtt/MQTTClient.obj: C:/ti/ccs1260/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/machine/_types.h
 mqtt/MQTTClient.obj: ../mqtt/MQTTPacket.h
 mqtt/MQTTClient.obj: ../mqtt/MQTTCC3100.h
-mqtt/MQTTClient.obj: C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/simplelink.h
-mqtt/MQTTClient.obj: C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/user.h
+mqtt/MQTTClient.obj: C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/simplelink.h
+mqtt/MQTTClient.obj: C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/user.h
 mqtt/MQTTClient.obj: C:/ti/ccs1260/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/string.h
 mqtt/MQTTClient.obj: C:/ti/ccs1260/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/xlocale/_string.h
 mqtt/MQTTClient.obj: C:/ti/ccs1260/ccs/ccs_base/arm/include/msp432.h
@@ -35,21 +35,21 @@ mqtt/MQTTClient.obj: C:/ti/ccs1260/ccs/ccs_base/arm/include/CMSIS/core_cm4.h
 mqtt/MQTTClient.obj: C:/ti/ccs1260/ccs/ccs_base/arm/include/CMSIS/cmsis_compiler.h
 mqtt/MQTTClient.obj: C:/ti/ccs1260/ccs/ccs_base/arm/include/CMSIS/cmsis_ccs.h
 mqtt/MQTTClient.obj: C:/ti/ccs1260/ccs/ccs_base/arm/include/system_msp432p401r.h
-mqtt/MQTTClient.obj: C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/board/board.h
-mqtt/MQTTClient.obj: C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/cli_uart/cli_uart.h
-mqtt/MQTTClient.obj: C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/spi_cc3100/spi_cc3100.h
-mqtt/MQTTClient.obj: C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/source/nonos.h
-mqtt/MQTTClient.obj: C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/source/objInclusion.h
-mqtt/MQTTClient.obj: C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/simplelink.h
-mqtt/MQTTClient.obj: C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/trace.h
-mqtt/MQTTClient.obj: C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/fs.h
-mqtt/MQTTClient.obj: C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/socket.h
-mqtt/MQTTClient.obj: C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/netapp.h
-mqtt/MQTTClient.obj: C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/wlan.h
-mqtt/MQTTClient.obj: C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/device.h
-mqtt/MQTTClient.obj: C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/netcfg.h
-mqtt/MQTTClient.obj: C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/wlan_rx_filters.h
-mqtt/MQTTClient.obj: C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/driverlib/MSP432P4xx/systick.h
+mqtt/MQTTClient.obj: C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/board/board.h
+mqtt/MQTTClient.obj: C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/cli_uart/cli_uart.h
+mqtt/MQTTClient.obj: C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/spi_cc3100/spi_cc3100.h
+mqtt/MQTTClient.obj: C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/source/nonos.h
+mqtt/MQTTClient.obj: C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/source/objInclusion.h
+mqtt/MQTTClient.obj: C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/simplelink.h
+mqtt/MQTTClient.obj: C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/trace.h
+mqtt/MQTTClient.obj: C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/fs.h
+mqtt/MQTTClient.obj: C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/socket.h
+mqtt/MQTTClient.obj: C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/netapp.h
+mqtt/MQTTClient.obj: C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/wlan.h
+mqtt/MQTTClient.obj: C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/device.h
+mqtt/MQTTClient.obj: C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/netcfg.h
+mqtt/MQTTClient.obj: C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/wlan_rx_filters.h
+mqtt/MQTTClient.obj: C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/driverlib/MSP432P4xx/systick.h
 
 ../mqtt/MQTTClient.c:
 
@@ -87,9 +87,9 @@ C:/ti/ccs1260/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/machine/_types.h:
 
 ../mqtt/MQTTCC3100.h:
 
-C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/simplelink.h:
+C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/simplelink.h:
 
-C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/user.h:
+C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/user.h:
 
 C:/ti/ccs1260/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/string.h:
 
@@ -121,33 +121,33 @@ C:/ti/ccs1260/ccs/ccs_base/arm/include/CMSIS/cmsis_ccs.h:
 
 C:/ti/ccs1260/ccs/ccs_base/arm/include/system_msp432p401r.h:
 
-C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/board/board.h:
+C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/board/board.h:
 
-C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/cli_uart/cli_uart.h:
+C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/cli_uart/cli_uart.h:
 
-C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/spi_cc3100/spi_cc3100.h:
+C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/spi_cc3100/spi_cc3100.h:
 
-C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/source/nonos.h:
+C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/source/nonos.h:
 
-C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/source/objInclusion.h:
+C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/source/objInclusion.h:
 
-C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/simplelink.h:
+C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/simplelink.h:
 
-C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/trace.h:
+C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/trace.h:
 
-C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/fs.h:
+C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/fs.h:
 
-C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/socket.h:
+C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/socket.h:
 
-C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/netapp.h:
+C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/netapp.h:
 
-C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/wlan.h:
+C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/wlan.h:
 
-C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/device.h:
+C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/device.h:
 
-C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/netcfg.h:
+C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/netcfg.h:
 
-C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/wlan_rx_filters.h:
+C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/simplelink/include/wlan_rx_filters.h:
 
-C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/driverlib/MSP432P4xx/systick.h:
+C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/driverlib/MSP432P4xx/systick.h:
 

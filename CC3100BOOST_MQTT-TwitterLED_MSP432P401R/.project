@@ -28,67 +28,73 @@
 		<link>
 			<name>Clock.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/inc/Clock.c</locationURI>
+			<locationURI>PARENT-1-ORIGINAL_PROJECT_ROOT/inc/Clock.c</locationURI>
 		</link>
 		<link>
 			<name>CortexM.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/inc/CortexM.c</locationURI>
+			<locationURI>PARENT-1-ORIGINAL_PROJECT_ROOT/inc/CortexM.c</locationURI>
 		</link>
 		<link>
 			<name>I2CB1.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/inc/I2CB1.c</locationURI>
+			<locationURI>PARENT-1-ORIGINAL_PROJECT_ROOT/inc/I2CB1.c</locationURI>
 		</link>
 		<link>
 			<name>LaunchPad.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/inc/LaunchPad.c</locationURI>
+			<locationURI>PARENT-1-ORIGINAL_PROJECT_ROOT/inc/LaunchPad.c</locationURI>
 		</link>
 		<link>
 			<name>Motor.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/inc/Motor.c</locationURI>
+			<locationURI>PARENT-1-ORIGINAL_PROJECT_ROOT/inc/Motor.c</locationURI>
 		</link>
 		<link>
 			<name>MotorSimple.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/inc/MotorSimple.c</locationURI>
+			<locationURI>PARENT-1-ORIGINAL_PROJECT_ROOT/inc/MotorSimple.c</locationURI>
 		</link>
 		<link>
 			<name>PWM.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/inc/PWM.c</locationURI>
+			<locationURI>PARENT-1-ORIGINAL_PROJECT_ROOT/inc/PWM.c</locationURI>
 		</link>
 		<link>
 			<name>SSD1306.h</name>
 			<type>1</type>
-			<locationURI>PARENT-7-PROJECT_LOC/ECE1188_Loki/inc/SSD1306.h</locationURI>
+			<locationURI>PARENT-7-ORIGINAL_PROJECT_ROOT/ECE1188_Loki/inc/SSD1306.h</locationURI>
 		</link>
 		<link>
 			<name>TA3InputCapture.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/inc/TA3InputCapture.c</locationURI>
+			<locationURI>PARENT-1-ORIGINAL_PROJECT_ROOT/inc/TA3InputCapture.c</locationURI>
 		</link>
 		<link>
 			<name>Tachometer.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/inc/Tachometer.c</locationURI>
+			<locationURI>PARENT-1-ORIGINAL_PROJECT_ROOT/inc/Tachometer.c</locationURI>
 		</link>
 		<link>
 			<name>TimerA0.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/inc/TimerA0.c</locationURI>
+			<locationURI>PARENT-1-ORIGINAL_PROJECT_ROOT/inc/TimerA0.c</locationURI>
 		</link>
 		<link>
 			<name>TimerA1.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/inc/TimerA1.c</locationURI>
+			<locationURI>PARENT-1-ORIGINAL_PROJECT_ROOT/inc/TimerA1.c</locationURI>
 		</link>
 		<link>
 			<name>opt3101.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/inc/opt3101.c</locationURI>
+			<locationURI>PARENT-1-ORIGINAL_PROJECT_ROOT/inc/opt3101.c</locationURI>
 		</link>
 	</linkedResources>
+	<variableList>
+		<variable>
+			<name>ORIGINAL_PROJECT_ROOT</name>
+			<value>file:/C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R</value>
+		</variable>
+	</variableList>
 </projectDescription>

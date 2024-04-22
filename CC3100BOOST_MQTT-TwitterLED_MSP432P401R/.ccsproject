@@ -11,6 +11,6 @@
 	<rts value="libc.a"/>
 	<createSlaveProjects value=""/>
 	<templateProperties value="id=CC3100BOOST_MQTT-TwitterLED_MSP432P401R.projectspec.CC3100BOOST_MQTT-TwitterLED_MSP432P401R"/>
-	<origin value="C:/Users/pserh/Downloads/CC3100BOOST_MQTT-TwitterLED_MSP432P401R-1/CC3100BOOST_MQTT-TwitterLED_MSP432P401R"/>
+	<origin value="C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R"/>
 	<filesToOpen value="main.c,README.txt"/>
 </projectOptions>

@@ -1,7 +1,7 @@
 # FIXED
 
 driverlib/MSP432P4xx/cpu.obj: ../driverlib/MSP432P4xx/cpu.c
-driverlib/MSP432P4xx/cpu.obj: C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/driverlib/MSP432P4xx/cpu.h
+driverlib/MSP432P4xx/cpu.obj: C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/driverlib/MSP432P4xx/cpu.h
 driverlib/MSP432P4xx/cpu.obj: C:/ti/ccs1260/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/stdint.h
 driverlib/MSP432P4xx/cpu.obj: C:/ti/ccs1260/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/_ti_config.h
 driverlib/MSP432P4xx/cpu.obj: C:/ti/ccs1260/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/linkage.h
@@ -23,7 +23,7 @@ driverlib/MSP432P4xx/cpu.obj: C:/ti/ccs1260/ccs/ccs_base/arm/include/system_msp4
 
 ../driverlib/MSP432P4xx/cpu.c:
 
-C:/Users/pserh/OneDrive/Documents/Pitt/Pitt_2324_Spring/ECE1188/tirslk_max_1_00_02/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/driverlib/MSP432P4xx/cpu.h:
+C:/Users/pserh/Pavel_Branch_Final/ECE1188_Loki/CC3100BOOST_MQTT-TwitterLED_MSP432P401R/driverlib/MSP432P4xx/cpu.h:
 
 C:/ti/ccs1260/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/stdint.h:
 

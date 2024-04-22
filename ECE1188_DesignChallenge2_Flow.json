@@ -1,0 +1,450 @@
+[
+    {
+        "id": "339d9bee9f204ec4",
+        "type": "tab",
+        "label": "ECE1188 Design Challenge 2",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "580e667fb5f439ac",
+        "type": "comment",
+        "z": "339d9bee9f204ec4",
+        "name": "Max Speed",
+        "info": "",
+        "x": 510,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "da9933c73b266fae",
+        "type": "mqtt in",
+        "z": "339d9bee9f204ec4",
+        "name": "",
+        "topic": "ECE1188/Loki/Max_Speed",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "2d00afe5d521878c",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 550,
+        "y": 180,
+        "wires": [
+            [
+                "5d338b2c649a6f1f"
+            ]
+        ]
+    },
+    {
+        "id": "19466913fb250a42",
+        "type": "comment",
+        "z": "339d9bee9f204ec4",
+        "name": "Number Crashes",
+        "info": "",
+        "x": 520,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "c5182d05914f87ae",
+        "type": "mqtt in",
+        "z": "339d9bee9f204ec4",
+        "name": "",
+        "topic": "ECE1188/Loki/Number_Crashes",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "2d00afe5d521878c",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 570,
+        "y": 320,
+        "wires": [
+            [
+                "c81f3eb13f78e3ac"
+            ]
+        ]
+    },
+    {
+        "id": "ecd20bf9b85dde7f",
+        "type": "comment",
+        "z": "339d9bee9f204ec4",
+        "name": "Time on Track",
+        "info": "",
+        "x": 510,
+        "y": 400,
+        "wires": []
+    },
+    {
+        "id": "efd694c3a98726dc",
+        "type": "mqtt in",
+        "z": "339d9bee9f204ec4",
+        "name": "",
+        "topic": "ECE1188/Loki/Track_Time",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "2d00afe5d521878c",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 550,
+        "y": 460,
+        "wires": [
+            [
+                "82d34152616d05fa"
+            ]
+        ]
+    },
+    {
+        "id": "73db6044bb7c4bca",
+        "type": "comment",
+        "z": "339d9bee9f204ec4",
+        "name": "Left Distance",
+        "info": "",
+        "x": 510,
+        "y": 520,
+        "wires": []
+    },
+    {
+        "id": "fe0a2723e989b4df",
+        "type": "mqtt in",
+        "z": "339d9bee9f204ec4",
+        "name": "",
+        "topic": "ECE1188/Loki/Dist_Left/Log",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "2d00afe5d521878c",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 560,
+        "y": 580,
+        "wires": [
+            [
+                "7ae7bafe162e1248"
+            ]
+        ]
+    },
+    {
+        "id": "50a20aec6b9711b9",
+        "type": "comment",
+        "z": "339d9bee9f204ec4",
+        "name": "Center Distance",
+        "info": "",
+        "x": 520,
+        "y": 640,
+        "wires": []
+    },
+    {
+        "id": "9e0e77d6330ef55e",
+        "type": "mqtt in",
+        "z": "339d9bee9f204ec4",
+        "name": "",
+        "topic": "ECE1188/Loki/Dist_Center/Log",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "2d00afe5d521878c",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 570,
+        "y": 700,
+        "wires": [
+            [
+                "e876242693a3c9e6"
+            ]
+        ]
+    },
+    {
+        "id": "b3e3b43e73d320e4",
+        "type": "comment",
+        "z": "339d9bee9f204ec4",
+        "name": "Rght Distance",
+        "info": "",
+        "x": 510,
+        "y": 780,
+        "wires": []
+    },
+    {
+        "id": "9bc11f09b73ed497",
+        "type": "mqtt in",
+        "z": "339d9bee9f204ec4",
+        "name": "",
+        "topic": "ECE1188/Loki/Dist_Right/Log",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "2d00afe5d521878c",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 560,
+        "y": 840,
+        "wires": [
+            [
+                "a795ebb0ab5fe7ce"
+            ]
+        ]
+    },
+    {
+        "id": "5d338b2c649a6f1f",
+        "type": "ui_gauge",
+        "z": "339d9bee9f204ec4",
+        "name": "",
+        "group": "7794cc551df882bc",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Max Speed",
+        "label": "units",
+        "format": "{{value}}",
+        "min": 0,
+        "max": 10,
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "diff": false,
+        "className": "",
+        "x": 1310,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "c81f3eb13f78e3ac",
+        "type": "ui_gauge",
+        "z": "339d9bee9f204ec4",
+        "name": "",
+        "group": "e3d83634280d1924",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Number Crashes",
+        "label": "units",
+        "format": "{{value}}",
+        "min": 0,
+        "max": 10,
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "diff": false,
+        "className": "",
+        "x": 1330,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "82d34152616d05fa",
+        "type": "ui_gauge",
+        "z": "339d9bee9f204ec4",
+        "name": "",
+        "group": "f40f4189a9d22ccd",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Track_Time",
+        "label": "units",
+        "format": "{{value}}",
+        "min": 0,
+        "max": 10,
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "diff": false,
+        "className": "",
+        "x": 1310,
+        "y": 460,
+        "wires": []
+    },
+    {
+        "id": "7ae7bafe162e1248",
+        "type": "ui_chart",
+        "z": "339d9bee9f204ec4",
+        "name": "",
+        "group": "7794cc551df882bc",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "label": "Left Distance",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 1330,
+        "y": 580,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "e876242693a3c9e6",
+        "type": "ui_gauge",
+        "z": "339d9bee9f204ec4",
+        "name": "",
+        "group": "e3d83634280d1924",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Center Distance",
+        "label": "units",
+        "format": "{{value}}",
+        "min": 0,
+        "max": 10,
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "diff": false,
+        "className": "",
+        "x": 1340,
+        "y": 700,
+        "wires": []
+    },
+    {
+        "id": "a795ebb0ab5fe7ce",
+        "type": "ui_gauge",
+        "z": "339d9bee9f204ec4",
+        "name": "",
+        "group": "f40f4189a9d22ccd",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Right Distance",
+        "label": "units",
+        "format": "{{value}}",
+        "min": 0,
+        "max": 10,
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "diff": false,
+        "className": "",
+        "x": 1340,
+        "y": 840,
+        "wires": []
+    },
+    {
+        "id": "2d00afe5d521878c",
+        "type": "mqtt-broker",
+        "name": "HIVEMQ",
+        "broker": "broker.hivemq.com",
+        "port": "1883",
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "7794cc551df882bc",
+        "type": "ui_group",
+        "name": "Buttons",
+        "tab": "c839e7c4cd9a73aa",
+        "order": 1,
+        "disp": true,
+        "width": 6,
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "e3d83634280d1924",
+        "type": "ui_group",
+        "name": "Buttons",
+        "tab": "c839e7c4cd9a73aa",
+        "order": 2,
+        "disp": true,
+        "width": 6,
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "f40f4189a9d22ccd",
+        "type": "ui_group",
+        "name": "Group 3",
+        "tab": "c839e7c4cd9a73aa",
+        "order": 3,
+        "disp": true,
+        "width": 6
+    },
+    {
+        "id": "c839e7c4cd9a73aa",
+        "type": "ui_tab",
+        "name": "Buttons",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    }
+]

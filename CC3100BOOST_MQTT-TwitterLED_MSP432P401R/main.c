@@ -1,35 +1,65 @@
-// Standard includes
-#include <stdlib.h>
-#include <string.h>
+// Lab21_OPT3101_TestMain.c
+//*****************************************************************************
+// Lab21 main for Robot with OPT3101 time of flight sensor
+// MSP432 with RSLK Max and OPT3101
+// Daniel and Jonathan Valvano
+// July 7, 2020
+//****************************************************************************
+/* This example accompanies the book
+   "Embedded Systems: Introduction to Robotics,
+   Jonathan W. Valvano, ISBN: 9781074544300, copyright (c) 2020
+ For more information about my classes, my research, and my books, see
+ http://users.ece.utexas.edu/~valvano/
 
-#include "driverlib.h"
-#include "simplelink.h"
-#include "sl_common.h"
-#include "MQTTClient.h"
+Simplified BSD License (FreeBSD License)
+Copyright (c) 2020, Jonathan Valvano, All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+The views and conclusions contained in the software and documentation are
+those of the authors and should not be interpreted as representing official
+policies, either expressed or implied, of the FreeBSD Project.
+*/
+// see opt3101.h for OPT3101 hardware connections
+// see Nokia5110.h LCD hardware connections
+// see SSD1306.h for OLED hardware connections
+// see UART0.h for UART0 hardware connections
+
+#include <stdint.h>
+#include "msp.h"
 #include "../inc/Clock.h"
-#include "..\inc\TimerA0.h"
-#include "..\inc\PWM.h"
-#include "..\inc\MotorSimple.h"
-#include "../inc/CortexM.h"
-#include "../inc/Motor.h"
-#include "../inc/TimerA1.h"
-#include "../inc/TimerA2.h"
-#include "../inc/Tachometer.h"
 #include "../inc/I2CB1.h"
+#include "../inc/CortexM.h"
+#include "../inc/LPF.h"
 #include "../inc/opt3101.h"
 #include "../inc/LaunchPad.h"
-#include "../inc/Reflectance.h"
-#include "msp.h"
-#include "../inc/LPF.h"
 #include "../inc/Bump.h"
+#include "../inc/Motor.h"
 #include "../inc/UART0.h"
 #include "../inc/SSD1306.h"
 #include "../inc/FFT.h"
-
 // Select one of the following three output possibilities
 // define USENOKIA
 #define USEOLED 1
-#define USEUART 1
+//#define USEUART
 
 #ifdef USENOKIA
 // this batch configures for LCD
@@ -86,6 +116,7 @@ uint32_t Noises[3];
 uint32_t TxChannel;
 uint32_t StartTime;
 uint32_t TimeToConvert; // in msec
+uint32_t on = 0;
 bool pollDistanceSensor(void){
   if(OPT3101_CheckDistanceSensor()){
     TxChannel = OPT3101_GetMeasurement(Distances,Amplitudes);
@@ -93,9 +124,109 @@ bool pollDistanceSensor(void){
   }
   return false;
 }
+// SysTick is just for debug profile, it can be removed
+void main1(void){ // interrupt implementation
+  int i = 0;
+  uint32_t channel = 1;
+  DisableInterrupts();
+  Clock_Init48MHz();
+  SysTick->LOAD = 0x00FFFFFF;           // maximum reload value
+  SysTick->CTRL = 0x00000005;           // enable SysTick with no interrupts
+  I2CB1_Init(30); // baud rate = 12MHz/30=400kHz
+  Init();
+  Clear();
+  OutString("OPT3101");
+  SetCursor(0, 1);
+  OutString("Left =");
+  SetCursor(0, 2);
+  OutString("Centr=");
+  SetCursor(0, 3);
+  OutString("Right=");
+  SetCursor(0, 4);
+  OutString("Interrupts");
+  SetCursor(0, 5);
+  OutString("NL=");
+  SetCursor(0, 6);
+  OutString("NC=");
+  SetCursor(0, 7);
+  OutString("NR=");
+  OPT3101_Init();
+  OPT3101_Setup();
+  OPT3101_CalibrateInternalCrosstalk();
+  OPT3101_ArmInterrupts(&TxChannel, Distances, Amplitudes);
+  StartTime = SysTick->VAL;
+  TxChannel = 3;
+  OPT3101_StartMeasurementChannel(channel);
+  LPF_Init(100,32);
+  LPF_Init2(100,32);
+  LPF_Init3(100,32);
+  EnableInterrupts();
+  while(1){
+    if(TxChannel <= 2){ // 0,1,2 means new data
+      TimeToConvert = ((StartTime-SysTick->VAL)&0x00FFFFFF)/48000; // msec
+      StartTime = SysTick->VAL;
+      if(TxChannel==0){
+        FilteredDistances[0] = LPF_Calc(Distances[0]);
+      }else if(TxChannel==1){
+        FilteredDistances[1] = LPF_Calc2(Distances[1]);
+      }else {
+        FilteredDistances[2] = LPF_Calc3(Distances[2]);
+      }
+      SetCursor(6, TxChannel+1);
+      OutUDec(FilteredDistances[TxChannel]);
+      TxChannel = 3; // 3 means no data
+      channel = (channel+1)%3;
+      OPT3101_StartMeasurementChannel(channel);
+      i = i + 1;
+    }
+    if(i >= 300){
+      i = 0;
+      SetCursor(3, 5);
+      OutUDec((uint16_t)Noise());  OutChar(','); OutUDec(Amplitudes[0]);
+      SetCursor(3, 6);
+      OutUDec((uint16_t)Noise2()); OutChar(','); OutUDec(Amplitudes[1]);
+      SetCursor(3, 7);
+      OutUDec((uint16_t)Noise3()); OutChar(','); OutUDec(Amplitudes[2]);
+    }
+    WaitForInterrupt();
+  }
+}
 
-
-
+void main2(void){ // busy-wait implementation
+  uint32_t channel = 1;
+  Clock_Init48MHz();
+  SysTick->LOAD = 0x00FFFFFF;           // maximum reload value
+  SysTick->CTRL = 0x00000005;           // enable SysTick with no interrupts
+  I2CB1_Init(30); // baud rate = 12MHz/30=400kHz
+  Init();
+  Clear();
+  OutString("OPT3101");
+  SetCursor(0, 1);
+  OutString("Left =");
+  SetCursor(0, 2);
+  OutString("Centr=");
+  SetCursor(0, 3);
+  OutString("Right=");
+  SetCursor(0, 4);
+  OutString("Busy-wait");
+  OPT3101_Init();
+  OPT3101_Setup();
+  OPT3101_CalibrateInternalCrosstalk();
+  OPT3101_StartMeasurementChannel(channel);
+  StartTime = SysTick->VAL;
+  while(1){
+    if(pollDistanceSensor()){
+      TimeToConvert = ((StartTime-SysTick->VAL)&0x00FFFFFF)/48000; // msec
+      if(TxChannel <= 2){
+        SetCursor(6, TxChannel+1);
+        OutUDec(Distances[TxChannel]);
+      }
+      channel = (channel+1)%3;
+      OPT3101_StartMeasurementChannel(channel);
+      StartTime = SysTick->VAL;
+    }
+  }
+}
 
 // calibrated for 500mm track
 // right is raw sensor data from right sensor
@@ -211,7 +342,113 @@ uint32_t Average;  // average of data = sum/N
 uint32_t Variance; // =sum2/(N-1)
 uint32_t Sigma;    // standard deviation = sqrt(Variance)
 
+int Program21_1(void){ //Program21_1(void){ // example program 21.1, RSLK1.1
+  int32_t n; uint32_t min,max,s=1;
+  int i = 0;
+  uint32_t channel = 1;
+  DisableInterrupts();
+  Clock_Init48MHz();
+  SysTick->LOAD = 0x00FFFFFF;           // maximum reload value
+  SysTick->CTRL = 0x00000005;           // enable SysTick with no interrupts
+  I2CB1_Init(30); // baud rate = 12MHz/30=400kHz
 
+  OPT3101_Init();
+  OPT3101_Setup();
+  OPT3101_CalibrateInternalCrosstalk();
+  OPT3101_ArmInterrupts(&TxChannel, Distances, Amplitudes);
+  StartTime = SysTick->VAL;
+  TxChannel = 3;
+  OPT3101_StartMeasurementChannel(channel);
+  LPF_Init(200,256);
+  LPF_Init2(200,256);
+  LPF_Init3(200,256);
+  EnableInterrupts();
+  UART0_Init();               // initialize UART0 115,200 baud rate
+  LaunchPad_Init();
+  UART0_OutString("Program 21.1 FIR filter test\nValvano June 2020, RSLK1.1\n10Hz sampling\nConnect OPT3101 to RSLK\n");
+  EnableInterrupts();
+  while(1){
+    UART0_OutString("\nOPT3101 resolution test\n ");
+    UART0_OutString("Prime filter \n");
+    LPF_Init(Distances[0],s);
+    for(n=0; n<256; n++){ // prime filter
+      if(TxChannel <= 2){ // 0,1,2 means new data
+        if(TxChannel==0){
+          FilteredDistances[0] = Left(LPF_Calc(Distances[0]));
+        }else if(TxChannel==1){
+          FilteredDistances[1] = LPF_Calc2(Distances[1]);
+        }else {
+          FilteredDistances[2] = Right(LPF_Calc3(Distances[2]));
+        }
+        TxChannel = 3; // 3 means no data
+        channel = (channel+1)%3;
+        OPT3101_StartMeasurementChannel(channel);
+        i = i + 1;
+      }
+    }
+    UART0_OutString("Collect "); UART0_OutUDec(N); UART0_OutString(" samples. ");
+    UART0_OutUDec(s); UART0_OutString("-point average\n");
+    Sum = Sum2 = 0;
+    for(n=0; n<N; ){
+      if(TxChannel <= 2){ // 0,1,2 means new data
+        if(TxChannel==0){
+          FilteredDistances[0] = Left(LPF_Calc(Distances[0]));
+          Sum = Sum+FilteredDistances[0];    // distance in mm
+          Data[n] = FilteredDistances[0];
+          n++;
+        }else if(TxChannel==1){
+          FilteredDistances[1] = LPF_Calc2(Distances[1]);
+        }else {
+          FilteredDistances[2] = Right(LPF_Calc3(Distances[2]));
+        }
+        TxChannel = 3; // 3 means no data
+        channel = (channel+1)%3;
+        OPT3101_StartMeasurementChannel(channel);
+        i = i + 1;
+      }
+    }
+    Average = Sum/N;
+    for(n=0; n<N; n++){
+      Sum2 = Sum2+(Data[n]-Average)*(Data[n]-Average); // 20bits*100 = 27 bits
+    }
+    Variance = (100*Sum2)/(N-1);
+    Sigma = sqrt(Variance);
+
+    min = 16384; max = 0;
+    for(n=0; n<N; n++){
+      if(Data[n] < min)
+        min = Data[n]; // smallest
+      if(Data[n] > max)
+        max = Data[n]; // largest
+      }
+    for(n=0;n<M;n++){
+      Histogram[n] = 0;
+    }
+    for(n=0; n<N; n++){
+      if((Data[n]>=min)&&(Data[n]<min+M)){
+        Histogram[Data[n]-min]++;
+      }
+    }
+    UART0_OutString("Probability Mass Function (PMF)\n Data  Count\n");
+    for(n=0;n<M;n++){
+      if(Histogram[n]){
+        UART0_OutUDec5(n+min); UART0_OutString("  \t");UART0_OutUDec(Histogram[n]);UART0_OutChar('\n');
+      }
+    }
+
+    UART0_OutString("FIR filter "); UART0_OutUDec(s); UART0_OutString("-point average\n");
+    UART0_OutString("Average      ="); UART0_OutUDec(Average); UART0_OutChar('\n');
+    UART0_OutString("Range        ="); UART0_OutUDec(max-min); UART0_OutChar('\n');
+    UART0_OutString("Variance     ="); UART0_OutUFix2(Variance); UART0_OutChar('\n');
+    UART0_OutString("Sigma        ="); UART0_OutUFix1(Sigma); UART0_OutChar('\n');
+    UART0_OutString("Average/Sigma="); UART0_OutUFix1((100*Average)/Sigma); UART0_OutChar('\n');
+
+//    while(LaunchPad_Input()==0x00){}; // wait for touch
+//    while(LaunchPad_Input()!=0x00){}; // wait for release
+    if(s<256) s = s*2; // 1,2,4,8,16,32,64,128,256...
+    else s = 1;
+  }
+}
 // assumes track is 500mm
 int32_t Mode=0; // 0 stop, 1 run
 int32_t Error;
@@ -253,7 +490,7 @@ void Controller(void){ // runs at 100 Hz
   }
 }
 
-void Controller_Right(void){ // runs at 100 Hz
+void Controller_Right(){ // runs at 100 Hz
   if(Mode){
     if((RightDistance>DESIRED)){
       SetPoint = (RightDistance)/2;
@@ -281,9 +518,7 @@ void Controller_Right(void){ // runs at 100 Hz
         UL = 0;
         UR = PWMNOMINAL;
     }
-
-    Motor_Forward(UL,UR);
-
+    Motor_Forward(UL, UR);
   }
 }
 
@@ -310,695 +545,15 @@ void Pause(void){int i;
 
 }
 
-
-/*
- * Values for below macros shall be modified per the access-point's (AP) properties
- * SimpleLink device will connect to following AP when the application is executed
- */
-
-#define SSID_NAME       "ECE DESIGN LAB 2.4"       /* Access point name to connect to. */
-#define SEC_TYPE        SL_SEC_TYPE_WPA_WPA2     /* Security type of the Access piont */
-#define PASSKEY         "ecedesignlab12345"   /* Password in case of secure AP */
-#define PASSKEY_LEN     pal_Strlen(PASSKEY)  /* Password length in case of secure AP */
-
-/*
- * MQTT server and topic properties that shall be modified per application
- */
-#define MQTT_BROKER_SERVER  "broker.hivemq.com"
-#define SUBSCRIBE_TOPIC "EcE"
-#define MAX_SPEED "ECE1188/Loki/Max_Speed"
-#define NUM_CRASHES "ECE1188/Loki/Number_Crashes"
-#define TRACK_TIME "ECE1188/Loki/Track_Time"
-#define LEFT_DISTANCE "ECE1188/Loki/Dist_Left/Log"
-#define CENTER_DISTANCE "ECE1188/Loki/Dist_Center/Log"
-#define RIGHT_DISTANCE "ECE1188/Loki/Dist_Right/Log"
-
-// MQTT message buffer size
-#define BUFF_SIZE 32
-
-
-#define APPLICATION_VERSION "1.0.0"
-
-#define MCLK_FREQUENCY 48000000
-#define PWM_PERIOD 255
-
-#define SL_STOP_TIMEOUT        0xFF
-
-#define SMALL_BUF           32
-#define MAX_SEND_BUF_SIZE   512
-#define MAX_SEND_RCV_SIZE   1024
-
-
-
-
-
-uint16_t motorSpeed;
-
-
-volatile uint16_t leftTach;
-enum TachDirection leftDir;
-volatile int32_t leftSteps;
-volatile uint16_t rightTach;
-enum TachDirection rightDir;
-volatile int32_t rightSteps;
-volatile uint32_t Average_RPM_L;
-volatile uint32_t Average_RPM_R;
-
-char leftRPMString[3];
-char rightRPMString[3];
-char leftDistance[3];
-char rightDistance[3];
-char centerDistance[3];
-
-
-
-/* Application specific status/error codes */
-typedef enum{
-    DEVICE_NOT_IN_STATION_MODE = -0x7D0,        /* Choosing this number to avoid overlap with host-driver's error codes */
-    HTTP_SEND_ERROR = DEVICE_NOT_IN_STATION_MODE - 1,
-    HTTP_RECV_ERROR = HTTP_SEND_ERROR - 1,
-    HTTP_INVALID_RESPONSE = HTTP_RECV_ERROR -1,
-    STATUS_CODE_MAX = -0xBB8
-}e_AppStatusCodes;
-
-#define min(X,Y) ((X) < (Y) ? (X) : (Y))
-
-
-/*
- * GLOBAL VARIABLES -- Start
- */
-/* Button debounce state variables */
-volatile unsigned int S1buttonDebounce = 0;
-volatile unsigned int S2buttonDebounce = 0;
-volatile int publishID = 0;
-
-unsigned char macAddressVal[SL_MAC_ADDR_LEN];
-unsigned char macAddressLen = SL_MAC_ADDR_LEN;
-
-char macStr[18];        // Formatted MAC Address String
-char uniqueID[9];       // Unique ID generated from TLV RAND NUM and MAC Address
-
-Network n;
-Client hMQTTClient;     // MQTT Client
-
-_u32  g_Status = 0;
-struct{
-    _u8 Recvbuff[MAX_SEND_RCV_SIZE];
-    _u8 SendBuff[MAX_SEND_BUF_SIZE];
-
-    _u8 HostName[SMALL_BUF];
-    _u8 CityName[SMALL_BUF];
-
-    _u32 DestinationIP;
-    _i16 SockID;
-}g_AppData;
-
-/* Port mapper configuration register */
-const uint8_t port_mapping[] =
-{
-    //Port P2:
-    PM_TA0CCR1A, PM_TA0CCR2A, PM_TA0CCR3A, PM_NONE, PM_TA1CCR1A, PM_NONE, PM_NONE, PM_NONE
-};
-
-/* TimerA UpMode Configuration Parameter */
-const Timer_A_UpModeConfig upConfig =
-{
-        TIMER_A_CLOCKSOURCE_SMCLK,              // SMCLK Clock Source
-        TIMER_A_CLOCKSOURCE_DIVIDER_8,          // SMCLK/8 = 6MHz
-        90000,                                  // 15ms debounce period
-        TIMER_A_TAIE_INTERRUPT_DISABLE,         // Disable Timer interrupt
-        TIMER_A_CCIE_CCR0_INTERRUPT_ENABLE ,    // Enable CCR0 interrupt
-        TIMER_A_DO_CLEAR                        // Clear value
-};
-
-/*
- * GLOBAL VARIABLES -- End
- */
-
-
-/*
- * STATIC FUNCTION DEFINITIONS -- Start
- */
-static _i32 establishConnectionWithAP();
-static _i32 configureSimpleLinkToDefaultState();
-static _i32 initializeAppVariables();
-static void displayBanner();
-static void messageArrived(MessageData*);
-static void generateUniqueID();
-
-
-/*
- * STATIC FUNCTION DEFINITIONS -- End
- */
-
-
-/*
- * ASYNCHRONOUS EVENT HANDLERS -- Start
- */
-
-/*!
-    \brief This function handles WLAN events
-
-    \param[in]      pWlanEvent is the event passed to the handler
-
-    \return         None
-
-    \note
-
-    \warning
-*/
-
-
-
-void utoa(unsigned int n, char returnVal[3])
-{
-
-   int numDigits = 0;
-   int helper;
-   int i;
-   for(i = 2; i >= 0; i--){
-       helper = n%10;
-       returnVal[i] = helper + 48;
-       n /= 10;
-   }
-
-}
-
-
-void SimpleLinkWlanEventHandler(SlWlanEvent_t *pWlanEvent)
-{
-    if(pWlanEvent == NULL)
-        CLI_Write(" [WLAN EVENT] NULL Pointer Error \n\r");
-
-    switch(pWlanEvent->Event)
-    {
-        case SL_WLAN_CONNECT_EVENT:
-        {
-            SET_STATUS_BIT(g_Status, STATUS_BIT_CONNECTION);
-
-            /*
-             * Information about the connected AP (like name, MAC etc) will be
-             * available in 'slWlanConnectAsyncResponse_t' - Applications
-             * can use it if required
-             *
-             * slWlanConnectAsyncResponse_t *pEventData = NULL;
-             * pEventData = &pWlanEvent->EventData.STAandP2PModeWlanConnected;
-             *
-             */
-        }
-        break;
-
-        case SL_WLAN_DISCONNECT_EVENT:
-        {
-            slWlanConnectAsyncResponse_t*  pEventData = NULL;
-
-            CLR_STATUS_BIT(g_Status, STATUS_BIT_CONNECTION);
-            CLR_STATUS_BIT(g_Status, STATUS_BIT_IP_ACQUIRED);
-
-            pEventData = &pWlanEvent->EventData.STAandP2PModeDisconnected;
-
-            /* If the user has initiated 'Disconnect' request, 'reason_code' is SL_USER_INITIATED_DISCONNECTION */
-            if(SL_USER_INITIATED_DISCONNECTION == pEventData->reason_code)
-            {
-                CLI_Write(" Device disconnected from the AP on application's request \n\r");
-            }
-            else
-            {
-                CLI_Write(" Device disconnected from the AP on an ERROR..!! \n\r");
-            }
-        }
-        break;
-
-        default:
-        {
-            CLI_Write(" [WLAN EVENT] Unexpected event \n\r");
-        }
-        break;
-    }
-}
-
-/*!
-    \brief This function handles events for IP address acquisition via DHCP
-           indication
-
-    \param[in]      pNetAppEvent is the event passed to the handler
-
-    \return         None
-
-    \note
-
-    \warning
-*/
-void SimpleLinkNetAppEventHandler(SlNetAppEvent_t *pNetAppEvent)
-{
-    if(pNetAppEvent == NULL)
-        CLI_Write(" [NETAPP EVENT] NULL Pointer Error \n\r");
-
-    switch(pNetAppEvent->Event)
-    {
-        case SL_NETAPP_IPV4_IPACQUIRED_EVENT:
-        {
-            SET_STATUS_BIT(g_Status, STATUS_BIT_IP_ACQUIRED);
-
-            /*
-             * Information about the connected AP's IP, gateway, DNS etc
-             * will be available in 'SlIpV4AcquiredAsync_t' - Applications
-             * can use it if required
-             *
-             * SlIpV4AcquiredAsync_t *pEventData = NULL;
-             * pEventData = &pNetAppEvent->EventData.ipAcquiredV4;
-             * <gateway_ip> = pEventData->gateway;
-             *
-             */
-        }
-        break;
-
-        default:
-        {
-            CLI_Write(" [NETAPP EVENT] Unexpected event \n\r");
-        }
-        break;
-    }
-}
-
-/*!
-    \brief This function handles callback for the HTTP server events
-
-    \param[in]      pHttpEvent - Contains the relevant event information
-    \param[in]      pHttpResponse - Should be filled by the user with the
-                    relevant response information
-
-    \return         None
-
-    \note
-
-    \warning
-*/
-void SimpleLinkHttpServerCallback(SlHttpServerEvent_t *pHttpEvent,
-                                  SlHttpServerResponse_t *pHttpResponse)
-{
-    /*
-     * This application doesn't work with HTTP server - Hence these
-     * events are not handled here
-     */
-    CLI_Write(" [HTTP EVENT] Unexpected event \n\r");
-}
-
-/*!
-    \brief This function handles general error events indication
-
-    \param[in]      pDevEvent is the event passed to the handler
-
-    \return         None
-*/
-void SimpleLinkGeneralEventHandler(SlDeviceEvent_t *pDevEvent)
-{
-    /*
-     * Most of the general errors are not FATAL are are to be handled
-     * appropriately by the application
-     */
-    CLI_Write(" [GENERAL EVENT] \n\r");
-}
-
-/*!
-    \brief This function handles socket events indication
-
-    \param[in]      pSock is the event passed to the handler
-
-    \return         None
-*/
-void SimpleLinkSockEventHandler(SlSockEvent_t *pSock)
-{
-    if(pSock == NULL)
-        CLI_Write(" [SOCK EVENT] NULL Pointer Error \n\r");
-
-    switch( pSock->Event )
-    {
-        case SL_SOCKET_TX_FAILED_EVENT:
-        {
-            /*
-            * TX Failed
-            *
-            * Information about the socket descriptor and status will be
-            * available in 'SlSockEventData_t' - Applications can use it if
-            * required
-            *
-            * SlSockEventData_t *pEventData = NULL;
-            * pEventData = & pSock->EventData;
-            */
-            switch( pSock->EventData.status )
-            {
-                case SL_ECLOSE:
-                    CLI_Write(" [SOCK EVENT] Close socket operation failed to transmit all queued packets\n\r");
-                break;
-
-
-                default:
-                    CLI_Write(" [SOCK EVENT] Unexpected event \n\r");
-                break;
-            }
-        }
-        break;
-
-        default:
-            CLI_Write(" [SOCK EVENT] Unexpected event \n\r");
-        break;
-    }
-}
-/*
- * ASYNCHRONOUS EVENT HANDLERS -- End
- */
-
-
-/*
- * Application's entry point
- */
-
-void function(){
-
-}
-
-
-int16_t numCrashed = 0;
-int16_t trackTime = 0;
-int32_t maxSpeed = 0;
-int32_t leftDistanceMeasurements[1000];
-int32_t centerDistanceMeasurements[1000];
-int32_t rightDistanceMeasurements[1000];
-int32_t numMeasurements = 0;
-int8_t timingVar = 0;
-int8_t input = 0;
-char stringHelper[3];
-uint8_t takeValues = 0;
-
-int print_To_IoT(/*int argc, char** argv*/)
-{
-    takeValues = 0;
-
-    uint32_t channel = 1;
-    TimerA0_Init(&function, 5000);   // initialize timer A0 to period of 5000
-    PWM_Init12(5000, 0, 0); // initialize PWM: period = 5000, both duty = 0, direction = straight
-    SysTick->LOAD = 0x00FFFFFF;           // maximum reload value
-    SysTick->CTRL = 0x00000005;           // enable SysTick with no interrupts
-    I2CB1_Init(30); // baud rate = 12MHz/30=400kHz
-    //Init();
-    //Clear();
-    OPT3101_Init();
-    OPT3101_Setup();
-    OPT3101_CalibrateInternalCrosstalk();
-    OPT3101_StartMeasurementChannel(channel);
-    StartTime = SysTick->VAL;
-
-    int i = 0;
-    uint32_t distanceAverage = 0;
-
-
-    _i32 retVal = -1;
-
-    retVal = initializeAppVariables();
-    ASSERT_ON_ERROR(retVal);
-
-
-    /* Stop WDT and initialize the system-clock of the MCU */
-    stopWDT();
-    initClk();
-
-
-    /* GPIO Setup for Pins 2.0-2.2 */
-    //MAP_PMAP_configurePorts((const uint8_t *) port_mapping, PMAP_P2MAP, 1,
-    //PMAP_DISABLE_RECONFIGURATION);
-
-    //MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P2,
-    //GPIO_PIN0 | GPIO_PIN1 | GPIO_PIN2, GPIO_PRIMARY_MODULE_FUNCTION);
-
-
-
-    /* Confinguring P1.1 & P1.4 as an input and enabling interrupts */
-    GPIO_setAsInputPinWithPullUpResistor(GPIO_PORT_P1, GPIO_PIN1 | GPIO_PIN4);
-    GPIO_clearInterruptFlag(GPIO_PORT_P1, GPIO_PIN1 | GPIO_PIN4);
-    GPIO_enableInterrupt(GPIO_PORT_P1, GPIO_PIN1 | GPIO_PIN4);
-    GPIO_interruptEdgeSelect(GPIO_PORT_P1, GPIO_PIN1 | GPIO_PIN4, GPIO_HIGH_TO_LOW_TRANSITION);
-    GPIO_clearInterruptFlag(GPIO_PORT_P1, GPIO_PIN1 | GPIO_PIN4);
-
-    GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN0);
-    GPIO_setAsOutputPin(GPIO_PORT_P1, GPIO_PIN0);
-
-    /* Configure TimerA0 for RGB LED*/
-    /*TA0CCR0 = PWM_PERIOD;                   // PWM Period
-    TA0CCTL1 = OUTMOD_7;                    // CCR1 reset/set
-    TA0CCR1 = PWM_PERIOD * (0/255);                 // CCR1 PWM duty cycle
-    TA0CCTL2 = OUTMOD_7;                    // CCR2 reset/set
-    TA0CCR2 = PWM_PERIOD * (0/255);                 // CCR2 PWM duty cycle
-    TA0CCTL3 = OUTMOD_7;                    // CCR3 reset/set
-    TA0CCR3 = PWM_PERIOD * (0/255);                 // CCR3 PWM duty cycle
-    TA0CTL = TASSEL__SMCLK | MC__UP | TACLR;  // SMCLK, up mode, clear TAR
-    */
-    /* Configuring TimerA1 for Up Mode */
-    Timer_A_configureUpMode(TIMER_A1_BASE, &upConfig);
-
-    Interrupt_enableInterrupt(INT_TA1_0);
-    Interrupt_enableInterrupt(INT_PORT1);
-    Interrupt_enableMaster();
-
-    /* Configure command line interface */
-    CLI_Configure();
-
-    displayBanner();
-
-    /*
-     * Following function configures the device to default state by cleaning
-     * the persistent settings stored in NVMEM (viz. connection profiles &
-     * policies, power policy etc)
-     *
-     * Applications may choose to skip this step if the developer is sure
-     * that the device is in its default state at start of application
-     *
-     * Note that all profiles and persistent settings that were done on the
-     * device will be lost
-     */
-    retVal = configureSimpleLinkToDefaultState();
-    if(retVal < 0)
-    {
-        if (DEVICE_NOT_IN_STATION_MODE == retVal)
-            CLI_Write(" Failed to configure the device in its default state \n\r");
-
-        LOOP_FOREVER();
-    }
-
-    CLI_Write(" Device is configured in default state \n\r");
-
-    /*
-     * Assumption is that the device is configured in station mode already
-     * and it is in its default state
-     */
-    retVal = sl_Start(0, 0, 0);
-    if ((retVal < 0) ||
-        (ROLE_STA != retVal) )
-    {
-        CLI_Write(" Failed to start the device \n\r");
-        LOOP_FOREVER();
-    }
-
-    CLI_Write(" Device started as STATION \n\r");
-
-    /* Connecting to WLAN AP */
-    retVal = establishConnectionWithAP();
-    if(retVal < 0)
-    {
-        CLI_Write(" Failed to establish connection w/ an AP \n\r");
-        LOOP_FOREVER();
-    }
-
-    CLI_Write(" Connection established w/ AP and IP is acquired \n\r");
-
-    // Obtain MAC Address
-    sl_NetCfgGet(SL_MAC_ADDRESS_GET,NULL,&macAddressLen,(unsigned char *)macAddressVal);
-
-    // Print MAC Addres to be formatted string
-    snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
-            macAddressVal[0], macAddressVal[1], macAddressVal[2], macAddressVal[3], macAddressVal[4], macAddressVal[5]);
-
-    // Generate 32bit unique ID from TLV Random Number and MAC Address
-    generateUniqueID();
-
-    int rc = 0;
-    unsigned char buf[100];
-    unsigned char readbuf[100];
-
-    NewNetwork(&n);
-    rc = ConnectNetwork(&n, MQTT_BROKER_SERVER, 1883);
-
-    if (rc != 0) {
-        CLI_Write(" Failed to connect to MQTT broker \n\r");
-        LOOP_FOREVER();
-    }
-    CLI_Write(" Connected to MQTT broker \n\r");
-
-    MQTTClient(&hMQTTClient, &n, 1000, buf, 100, readbuf, 100);
-    MQTTPacket_connectData cdata = MQTTPacket_connectData_initializer;
-    cdata.MQTTVersion = 3;
-    cdata.clientID.cstring = uniqueID;
-    rc = MQTTConnect(&hMQTTClient, &cdata);
-
-    if (rc != 0) {
-        CLI_Write(" Failed to start MQTT client \n\r");
-        LOOP_FOREVER();
-    }
-    CLI_Write(" Started MQTT client successfully \n\r");
-
-    rc = MQTTSubscribe(&hMQTTClient, SUBSCRIBE_TOPIC, QOS0, messageArrived);
-
-    if (rc != 0) {
-        CLI_Write(" Failed to subscribe to /msp/cc3100/demo topic \n\r");
-        LOOP_FOREVER();
-    }
-    CLI_Write(" Subscribed to /msp/cc3100/demo topic \n\r");
-
-    rc = MQTTSubscribe(&hMQTTClient, uniqueID, QOS0, messageArrived);
-
-    if (rc != 0) {
-        CLI_Write(" Failed to subscribe to uniqueID topic \n\r");
-        LOOP_FOREVER();
-    }
-    CLI_Write(" Subscribed to uniqueID topic \n\r");
-
-    while(1){
-        rc = MQTTYield(&hMQTTClient, 10);
-       // if (rc != 0) {
-         //   CLI_Write(" MQTT failed to yield \n\r");
-           // LOOP_FOREVER();
-        //}
-
-
-
-        int rc = 0;
-
-        //print max speed
-        utoa(maxSpeed, stringHelper);
-        rc = 0;
-        MQTTMessage msgMaxSpeed;
-        msgMaxSpeed.dup = 0;
-        msgMaxSpeed.id = 0;
-        msgMaxSpeed.payload = stringHelper;
-        msgMaxSpeed.payloadlen = 3;
-        msgMaxSpeed.qos = QOS0;
-        msgMaxSpeed.retained = 0;
-        rc = MQTTPublish(&hMQTTClient, MAX_SPEED, &msgMaxSpeed);
-
-        //print numCrashes
-        utoa(numCrashed, stringHelper);
-        rc = 0;
-        MQTTMessage msgNumCrashes;
-        msgNumCrashes.dup = 0;
-        msgNumCrashes.id = 0;
-        msgNumCrashes.payload = stringHelper;
-        msgNumCrashes.payloadlen = 3;
-        msgNumCrashes.qos = QOS0;
-        msgNumCrashes.retained = 0;
-        rc = MQTTPublish(&hMQTTClient, NUM_CRASHES, &msgNumCrashes);
-
-        //print trackTime
-        utoa(trackTime, stringHelper);
-        rc = 0;
-        MQTTMessage msgTrackTime;
-        msgTrackTime.dup = 0;
-        msgTrackTime.id = 0;
-        msgTrackTime.payload = stringHelper;
-        msgTrackTime.payloadlen = 3;
-        msgTrackTime.qos = QOS0;
-        msgTrackTime.retained = 0;
-        rc = MQTTPublish(&hMQTTClient, TRACK_TIME, &msgTrackTime);
-
-        //print all distances
-        int i;
-        for(i = 0; i < numMeasurements; i++){
-
-            //int rc = 0;
-            //print left distance
-            utoa(leftDistanceMeasurements[i], stringHelper);
-            rc = 0;
-            MQTTMessage msgLeftDistance;
-            msgLeftDistance.dup = 0;
-            msgLeftDistance.id = 0;
-            msgLeftDistance.payload = stringHelper;
-            msgLeftDistance.payloadlen = 3;
-            msgLeftDistance.qos = QOS0;
-            msgLeftDistance.retained = 0;
-            rc = MQTTPublish(&hMQTTClient, LEFT_DISTANCE, &msgLeftDistance);
-
-            //print center distance
-            utoa(centerDistanceMeasurements[i], stringHelper);
-            rc = 0;
-            MQTTMessage msgCenterDistance;
-            msgCenterDistance.dup = 0;
-            msgCenterDistance.id = 0;
-            msgCenterDistance.payload = stringHelper;
-            msgCenterDistance.payloadlen = 3;
-            msgCenterDistance.qos = QOS0;
-            msgCenterDistance.retained = 0;
-            rc = MQTTPublish(&hMQTTClient, CENTER_DISTANCE, &msgCenterDistance);
-
-
-            //print right distance
-            utoa(rightDistanceMeasurements[i], stringHelper);
-            rc = 0;
-            MQTTMessage msgRightDistance;
-            msgRightDistance.dup = 0;
-            msgRightDistance.id = 0;
-            msgRightDistance.payload = stringHelper;
-            msgRightDistance.payloadlen = 3;
-            msgRightDistance.qos = QOS0;
-            msgRightDistance.retained = 0;
-            rc = MQTTPublish(&hMQTTClient, RIGHT_DISTANCE, &msgRightDistance);
-
-            Delay(50);
-
-        }
-
-
-        CLI_Write(" Published unique ID successfully \n\r");
-
-
-    }
-}
-
-uint16_t timingIntHardware = 0;
-
-void updateIoTValues(){
-
-    if(takeValues == 1){
-        if (timingIntHardware == 163){
-        leftDistanceMeasurements[numMeasurements] = LeftDistance;
-                centerDistanceMeasurements[numMeasurements] = CenterDistance;
-                rightDistanceMeasurements[numMeasurements] = RightDistance;
-
-                if(numMeasurements == 999){
-                    numMeasurements = 0;
-                }
-                else{
-                    numMeasurements++;
-                }
-         trackTime++;
-         timingIntHardware = 0;
-        }
-        else{
-            timingIntHardware++;
-        }
-    }
-}
 void main(void){ // wallFollow wall following implementation
-  takeValues = 0;
   int i = 0;
   uint32_t channel = 1;
   DisableInterrupts();
   Clock_Init48MHz();
-  TimerA2_Init(&updateIoTValues, 3000);   // initialize timer A0 to period of 15000
   Bump_Init();
-  //SysTick_Init(48000, 2);          // set up SysTick for 1000 Hz interrupts
   LaunchPad_Init(); // built-in switches and LEDs
-  Motor_Init();
+  UART0_Init();
   Motor_Stop(); // initialize and stop
-  Tachometer_Init();
   Mode = 0;
   I2CB1_Init(30); // baud rate = 12MHz/30=400kHz
   Init();
@@ -1030,22 +585,19 @@ void main(void){ // wallFollow wall following implementation
   UR = UL = PWMNOMINAL; //initial power
   Pause();
   EnableInterrupts();
-  takeValues = 1;
   while(1){
-    takeValues = 1;
-    if(Bump_Read()){ // collision
-      //Mode = 0;
-      numCrashed++;
-      //Motor_Stop();
-      Motor_Forward(0,0);
-      Clock_Delay1ms(500);
-      //Mode = 1;
-      //Motor_Stop();
-      //print_To_IoT();
+    char command[10];
+    UART0_InString(command, 9);
+
+    if(Bump_Read()){ // collision or stop command
+      Mode = 0;
+      Motor_Stop();
+      Pause();
     }
-    if(numCrashed == 3){
-        print_To_IoT();
+    if(command[0] == 'S')
+    {
         Motor_Stop();
+        on = 0;
     }
     if(TxChannel <= 2){ // 0,1,2 means new data
       if(TxChannel==0){
@@ -1074,7 +626,11 @@ void main(void){ // wallFollow wall following implementation
       OPT3101_StartMeasurementChannel(channel);
       i = i + 1;
     }
-    Controller_Right();
+    if (command[0] == 'F' || on == 1)
+    {
+        Controller_Right();
+        on = 1;
+    }
     if(i >= 100){
       i = 0;
       SetCursor(3, 5);
@@ -1085,332 +641,144 @@ void main(void){ // wallFollow wall following implementation
       OutUDec(UL); OutChar(','); OutUDec(UR);
     }
 
-    Tachometer_Get(&leftTach, &leftDir, &leftSteps, &rightTach, &rightDir, &rightSteps);
-    Average_RPM_L = leftTach/800;
-    Average_RPM_R = rightTach/800;
-    if(Average_RPM_L > maxSpeed){
-        maxSpeed = Average_RPM_L;
-    }
-    if(Average_RPM_R > maxSpeed){
-        maxSpeed = Average_RPM_R;
-    }
-
-
     WaitForInterrupt();
   }
 }
+// MSP432 memory limited to q=11, N=2048
+#define q   8       /* for 2^8 points */
+#define NN   (1<<q)  /* 256-point FFT, iFFT */
+complex_t a[NN], scratch[NN];
+uint32_t PlotOffset,PlotData;
+void main4(void){ // main4 is DFT of left distance
+  int i = 0; int k=0;
+  uint32_t channel = 1;
+  DisableInterrupts();
+  Clock_Init48MHz();
+  SysTick->LOAD = 0x00FFFFFF;           // maximum reload value
+  SysTick->CTRL = 0x00000005;           // enable SysTick with no interrupts
+  I2CB1_Init(30); // baud rate = 12MHz/30=400kHz
+  Init();
+  UART0_Init();               // initialize UART0 115,200 baud rate
 
-
-
-static void generateUniqueID() {
-    CRC32_setSeed(TLV->RANDOM_NUM_1, CRC32_MODE);
-    CRC32_set32BitData(TLV->RANDOM_NUM_2);
-    CRC32_set32BitData(TLV->RANDOM_NUM_3);
-    CRC32_set32BitData(TLV->RANDOM_NUM_4);
-    int i;
-    for (i = 0; i < 6; i++)
-    CRC32_set8BitData(macAddressVal[i], CRC32_MODE);
-
-    uint32_t crcResult = CRC32_getResult(CRC32_MODE);
-    sprintf(uniqueID, "%06X", crcResult);
-}
-
-//****************************************************************************
-//
-//!    \brief MQTT message received callback - Called when a subscribed topic
-//!                                            receives a message.
-//! \param[in]                  data is the data passed to the callback
-//!
-//! \return                        None
-//
-//****************************************************************************
-static void messageArrived(MessageData* data) {
-    char buf[BUFF_SIZE];
-
-    char *tok;
-    long color;
-
-    // Check for buffer overflow
-    if (data->topicName->lenstring.len >= BUFF_SIZE) {
-//      UART_PRINT("Topic name too long!\n\r");
-        return;
-    }
-    if (data->message->payloadlen >= BUFF_SIZE) {
-//      UART_PRINT("Payload too long!\n\r");
-        return;
-    }
-
-    strncpy(buf, data->topicName->lenstring.data,
-        min(BUFF_SIZE, data->topicName->lenstring.len));
-    buf[data->topicName->lenstring.len] = 0;
-
-
-
-    strncpy(buf, data->message->payload,
-        min(BUFF_SIZE, data->message->payloadlen));
-    buf[data->message->payloadlen] = 0;
-
-    //CLI_Write(buf);
-
-    if(buf[0] == 'g'){
-        PWM_Duty1(1000);
-        PWM_Duty2(1000);
-        motorSpeed = 500;
-    }
-    else if(buf[0] == 's'){
-        PWM_Duty1(0);
-        PWM_Duty2(0);
-        motorSpeed = 0;
-    }
-
-
-    return;
-}
-
-/*
- * Port 1 interrupt handler. This handler is called whenever the switch attached
- * to P1.1 is pressed.
- */
-void PORT1_IRQHandler(void)
-{
-    uint32_t status = GPIO_getEnabledInterruptStatus(GPIO_PORT_P1);
-    GPIO_clearInterruptFlag(GPIO_PORT_P1, status);
-
-    if (status & GPIO_PIN1)
-    {
-        if (S1buttonDebounce == 0)
-        {
-            S1buttonDebounce = 1;
-
-            GPIO_setOutputHighOnPin(GPIO_PORT_P1, GPIO_PIN0);
-
-            // Publish the unique ID
-            publishID = 1;
-
-            MAP_Timer_A_startCounter(TIMER_A1_BASE, TIMER_A_UP_MODE);
+  OPT3101_Init();
+  OPT3101_Setup();
+  OPT3101_CalibrateInternalCrosstalk();
+  OPT3101_ArmInterrupts(&TxChannel, Distances, Amplitudes);
+  StartTime = SysTick->VAL;
+  TxChannel = 3;
+  OPT3101_StartMeasurementChannel(channel);
+  LPF_Init(125,8);
+  LPF_Init2(100,8);
+  LPF_Init3(100,8);
+  EnableInterrupts();
+  uint32_t warmUpTime=0; // let OPT3101 rise to stable temperature
+  SSD1306_Clear();
+  i = 0; SSD1306_ClearBuffer();
+  PlotOffset = 100; // 100 to 163 mm
+  while(warmUpTime < 27000){ // 27000*0.1sec*60min/sec=15min
+    if(TxChannel <= 2){ // 0,1,2 means new data
+      if(TxChannel==0){ // fs=10 Hz
+        FilteredDistances[0] = Left(LPF_Calc(Distances[0]));
+        if(FilteredDistances[0] < PlotOffset){
+          PlotData = 0;
+        }else{
+          PlotData = FilteredDistances[0]-PlotOffset;
+          if(PlotData > 63){
+            PlotData = 63;
+          }
         }
+        SSD1306_DrawPixel(i,63-PlotData,WHITE); // range PlotOffset to PlotOffset+63mm
+        SSD1306_DisplayBuffer();
+        i++;
+      }else if(TxChannel==1){
+        FilteredDistances[1] = LPF_Calc2(Distances[1]);
+      }else {
+        FilteredDistances[2] = Right(LPF_Calc3(Distances[2]));
+      }
+     // SetCursor(6, TxChannel+1);
+     // OutUDec(FilteredDistances[TxChannel]);
+     // SetCursor(0, 6); OutUDec(warmUpTime);
+      TxChannel = 3; // 3 means no data
+      channel = (channel+1)%3;
+      OPT3101_StartMeasurementChannel(channel);
+      if(i == 128){
+        i = 0;
+        SSD1306_ClearBuffer();
+      }
+      warmUpTime++;
     }
-    if (status & GPIO_PIN4)
-    {
-        if (S2buttonDebounce == 0)
-        {
-            S2buttonDebounce = 1;
-
-            CLI_Write(" MAC Address: \n\r ");
-            CLI_Write(macStr);
-            CLI_Write("\n\r");
-
-            MAP_Timer_A_startCounter(TIMER_A1_BASE, TIMER_A_UP_MODE);
-        }
+  }
+  Clear();
+  OutString("OPT3101");
+  SetCursor(0, 1);
+  OutString("Left =");
+  SetCursor(0, 2);
+  OutString("Centr=");
+  SetCursor(0, 3);
+  OutString("Right=");
+  SetCursor(0, 4);
+  OutString("Interrupts");
+  SetCursor(0, 5);
+  OutString("NL=");
+  SetCursor(0, 6);
+  OutString("NC=");
+  SetCursor(0, 7);
+  OutString("NR=");
+  while(1){
+    if(TxChannel <= 2){ // 0,1,2 means new data
+      if(TxChannel==0){ // fs=10 Hz
+        //  FilteredDistances[0] = Left(LPF_Calc(Distances[0]));
+        FilteredDistances[0] = LPF_Calc(Distances[0]);
+        a[k].Real = (float)FilteredDistances[0]; // units in mm
+        a[k].Imag = 0.0;
+        k++;
+      }else if(TxChannel==1){
+        FilteredDistances[1] = LPF_Calc2(Distances[1]);
+      }else {
+        FilteredDistances[2] = Right(LPF_Calc3(Distances[2]));
+      }
+      SetCursor(6, TxChannel+1);
+      OutUDec(FilteredDistances[TxChannel]);
+      TxChannel = 3; // 3 means no data
+      channel = (channel+1)%3;
+      OPT3101_StartMeasurementChannel(channel);
+      i = i + 1;
     }
-}
-
-/*
-void TA1_0_IRQHandler(void)
-{
-    GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN0);
-    if (P1IN & GPIO_PIN1)
-    {
-        S1buttonDebounce = 0;
+    if(i >= 300){
+      i = 0;
+      SetCursor(3, 5);
+      OutUDec((uint16_t)Noise());  OutChar(','); OutUDec(Amplitudes[0]);
+      SetCursor(3, 6);
+      OutUDec((uint16_t)Noise2()); OutChar(','); OutUDec(Amplitudes[1]);
+      SetCursor(3, 7);
+      OutUDec((uint16_t)Noise3()); OutChar(','); OutUDec(Amplitudes[2]);
     }
-    if (P1IN & GPIO_PIN4)
-    {
-        S2buttonDebounce = 0;
+    if(k == NN){
+      UART0_OutString("OPT3101, fs=10Hz, N=");  UART0_OutUDec(NN);UART0_OutString(" samples\n");
+      UART0_OutString("Time(ms),Distance(mm)\n");
+      for(int n=0; n<NN; n++){
+          UART0_OutUFix1(n); UART0_OutString(", ");
+        int32_t data = (int32_t)a[n].Real;
+        UART0_OutSDec(data);UART0_OutChar('\n');
+      }
+      StartTime = SysTick->VAL;
+      fft(a, NN, scratch);
+      TimeToConvert = ((StartTime-SysTick->VAL)&0x00FFFFFF)/48; // usec
+      UART0_OutString("\nTime to execute FFT "); UART0_OutUDec(TimeToConvert); UART0_OutString(" us");
+      UART0_OutString("\nFreq(Hz),Magnitude(mm)\n");
+      UART0_OutUFix2(0); UART0_OutString(", ");
+      int32_t data = (int32_t)(100.0*sqrt(a[0].Real*a[0].Real+a[0].Imag*a[0].Imag)/(float)NN);
+      UART0_OutUFix2(data);UART0_OutChar('\n');
+      for(int n=1; n<NN/2; n++){
+        UART0_OutUFix2(1000*n/NN); UART0_OutString(", ");
+        int32_t data = (int32_t)(100.0*sqrt(a[n].Real*a[n].Real+a[n].Imag*a[n].Imag)/(float)(NN/2));
+        UART0_OutUFix2(data);UART0_OutChar('\n');
+      }
+      k = 0;
+      OPT3101_StartMeasurementChannel(channel);
     }
-
-    if ((P1IN & GPIO_PIN1) && (P1IN & GPIO_PIN4))
-    {
-        Timer_A_stopTimer(TIMER_A1_BASE);
-    }
-    MAP_Timer_A_clearCaptureCompareInterrupt(TIMER_A1_BASE,
-                TIMER_A_CAPTURECOMPARE_REGISTER_0);
-}*/
-
-
-/*!
-    \brief This function configure the SimpleLink device in its default state. It:
-           - Sets the mode to STATION
-           - Configures connection policy to Auto and AutoSmartConfig
-           - Deletes all the stored profiles
-           - Enables DHCP
-           - Disables Scan policy
-           - Sets Tx power to maximum
-           - Sets power policy to normal
-           - Unregisters mDNS services
-           - Remove all filters
-
-    \param[in]      none
-
-    \return         On success, zero is returned. On error, negative is returned
-*/
-static _i32 configureSimpleLinkToDefaultState()
-{
-    SlVersionFull   ver = {0};
-    _WlanRxFilterOperationCommandBuff_t  RxFilterIdMask = {0};
-
-    _u8           val = 1;
-    _u8           configOpt = 0;
-    _u8           configLen = 0;
-    _u8           power = 0;
-
-    _i32          retVal = -1;
-    _i32          mode = -1;
-
-    mode = sl_Start(0, 0, 0);
-    ASSERT_ON_ERROR(mode);
-
-    /* If the device is not in station-mode, try configuring it in station-mode */
-    if (ROLE_STA != mode)
-    {
-        if (ROLE_AP == mode)
-        {
-            /* If the device is in AP mode, we need to wait for this event before doing anything */
-            while(!IS_IP_ACQUIRED(g_Status)) { _SlNonOsMainLoopTask(); }
-        }
-
-        /* Switch to STA role and restart */
-        retVal = sl_WlanSetMode(ROLE_STA);
-        ASSERT_ON_ERROR(retVal);
-
-        retVal = sl_Stop(SL_STOP_TIMEOUT);
-        ASSERT_ON_ERROR(retVal);
-
-        retVal = sl_Start(0, 0, 0);
-        ASSERT_ON_ERROR(retVal);
-
-        /* Check if the device is in station again */
-        if (ROLE_STA != retVal)
-        {
-            /* We don't want to proceed if the device is not coming up in station-mode */
-            ASSERT_ON_ERROR(DEVICE_NOT_IN_STATION_MODE);
-        }
-    }
-
-    /* Get the device's version-information */
-    configOpt = SL_DEVICE_GENERAL_VERSION;
-    configLen = sizeof(ver);
-    retVal = sl_DevGet(SL_DEVICE_GENERAL_CONFIGURATION, &configOpt, &configLen, (_u8 *)(&ver));
-    ASSERT_ON_ERROR(retVal);
-
-    /* Set connection policy to Auto + SmartConfig (Device's default connection policy) */
-    retVal = sl_WlanPolicySet(SL_POLICY_CONNECTION, SL_CONNECTION_POLICY(1, 0, 0, 0, 1), NULL, 0);
-    ASSERT_ON_ERROR(retVal);
-
-    /* Remove all profiles */
-    retVal = sl_WlanProfileDel(0xFF);
-    ASSERT_ON_ERROR(retVal);
-
-    /*
-     * Device in station-mode. Disconnect previous connection if any
-     * The function returns 0 if 'Disconnected done', negative number if already disconnected
-     * Wait for 'disconnection' event if 0 is returned, Ignore other return-codes
-     */
-    retVal = sl_WlanDisconnect();
-    if(0 == retVal)
-    {
-        /* Wait */
-        while(IS_CONNECTED(g_Status)) { _SlNonOsMainLoopTask(); }
-    }
-
-    /* Enable DHCP client*/
-    retVal = sl_NetCfgSet(SL_IPV4_STA_P2P_CL_DHCP_ENABLE,1,1,&val);
-    ASSERT_ON_ERROR(retVal);
-
-    /* Disable scan */
-    configOpt = SL_SCAN_POLICY(0);
-    retVal = sl_WlanPolicySet(SL_POLICY_SCAN , configOpt, NULL, 0);
-    ASSERT_ON_ERROR(retVal);
-
-    /* Set Tx power level for station mode
-       Number between 0-15, as dB offset from max power - 0 will set maximum power */
-    power = 0;
-    retVal = sl_WlanSet(SL_WLAN_CFG_GENERAL_PARAM_ID, WLAN_GENERAL_PARAM_OPT_STA_TX_POWER, 1, (_u8 *)&power);
-    ASSERT_ON_ERROR(retVal);
-
-    /* Set PM policy to normal */
-    retVal = sl_WlanPolicySet(SL_POLICY_PM , SL_NORMAL_POLICY, NULL, 0);
-    ASSERT_ON_ERROR(retVal);
-
-    /* Unregister mDNS services */
-    retVal = sl_NetAppMDNSUnRegisterService(0, 0);
-    ASSERT_ON_ERROR(retVal);
-
-    /* Remove  all 64 filters (8*8) */
-    pal_Memset(RxFilterIdMask.FilterIdMask, 0xFF, 8);
-    retVal = sl_WlanRxFilterSet(SL_REMOVE_RX_FILTER, (_u8 *)&RxFilterIdMask,
-                       sizeof(_WlanRxFilterOperationCommandBuff_t));
-    ASSERT_ON_ERROR(retVal);
-
-    retVal = sl_Stop(SL_STOP_TIMEOUT);
-    ASSERT_ON_ERROR(retVal);
-
-    retVal = initializeAppVariables();
-    ASSERT_ON_ERROR(retVal);
-
-    return retVal; /* Success */
-}
-
-/*!
-    \brief Connecting to a WLAN Access point
-
-    This function connects to the required AP (SSID_NAME).
-    The function will return once we are connected and have acquired IP address
-
-    \param[in]  None
-
-    \return     0 on success, negative error-code on error
-
-    \note
-
-    \warning    If the WLAN connection fails or we don't acquire an IP address,
-                We will be stuck in this function forever.
-*/
-static _i32 establishConnectionWithAP()
-{
-    SlSecParams_t secParams = {0};
-    _i32 retVal = 0;
-
-    secParams.Key = PASSKEY;
-    secParams.KeyLen = PASSKEY_LEN;
-    secParams.Type = SEC_TYPE;
-
-    retVal = sl_WlanConnect(SSID_NAME, pal_Strlen(SSID_NAME), 0, &secParams, 0);
-    ASSERT_ON_ERROR(retVal);
-
-    /* Wait */
-    while((!IS_CONNECTED(g_Status)) || (!IS_IP_ACQUIRED(g_Status))) { _SlNonOsMainLoopTask(); }
-
-    return SUCCESS;
-}
-
-/*!
-    \brief This function initializes the application variables
-
-    \param[in]  None
-
-    \return     0 on success, negative error-code on error
-*/
-static _i32 initializeAppVariables()
-{
-    g_Status = 0;
-    pal_Memset(&g_AppData, 0, sizeof(g_AppData));
-
-    return SUCCESS;
-}
-
-/*!
-    \brief This function displays the application's banner
-
-    \param      None
-
-    \return     None
-*/
-static void displayBanner()
-{
-    CLI_Write("\n\r\n\r");
-    CLI_Write(" MQTT Twitter Controlled RGB LED - Version ");
-    CLI_Write(APPLICATION_VERSION);
-    CLI_Write("\n\r*******************************************************************************\n\r");
+    WaitForInterrupt();
+  }
 }
 
 

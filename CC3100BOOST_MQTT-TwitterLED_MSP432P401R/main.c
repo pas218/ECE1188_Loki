@@ -215,66 +215,182 @@ uint32_t Sigma;    // standard deviation = sqrt(Variance)
 // assumes track is 500mm
 int32_t Mode=0; // 0 stop, 1 run
 int32_t Error;
-int32_t Ki=1;  // integral controller gain
-int32_t Kp=4;  // proportional controller gain //was 4
-int32_t UR, UL;  // PWM duty 0 to 14,998
+//int32_t Ki=1;  // integral controller gain
+//int32_t Kp=4;  // proportional controller gain //was 4
+//int32_t UR, UL;  // PWM duty 0 to 14,998
 
 #define TOOCLOSE 200 //was 200
 #define DESIRED 250 //was 250
-int32_t SetPoint = 250; // mm //was 250
-int32_t LeftDistance,CenterDistance,RightDistance; // mm
 #define TOOFAR 400 // was 400
 
-#define PWMNOMINAL 5000 // was 2500
-#define SWING 2000 //was 1000
-#define PWMMIN (PWMNOMINAL-SWING)
-#define PWMMAX (PWMNOMINAL+SWING)
-void Controller(void){ // runs at 100 Hz
-  if(Mode){
-    if((LeftDistance>DESIRED)&&(RightDistance>DESIRED)){
-      SetPoint = (LeftDistance+RightDistance)/2;
-    }else{
-      SetPoint = DESIRED;
-    }
-    if(LeftDistance < RightDistance ){
-      Error = LeftDistance-SetPoint;
-    }else {
-      Error = SetPoint-RightDistance;
-    }
- //   UR = UR + Ki*Error;      // adjust right motor
-    UR = PWMNOMINAL+Kp*Error; // proportional control
-    UL = PWMNOMINAL-Kp*Error; // proportional control
-    if(UR < (PWMNOMINAL-SWING)) UR = PWMNOMINAL-SWING; // 3,000 to 7,000
-    if(UR > (PWMNOMINAL+SWING)) UR = PWMNOMINAL+SWING;
-    if(UL < (PWMNOMINAL-SWING)) UL = PWMNOMINAL-SWING; // 3,000 to 7,000
-    if(UL > (PWMNOMINAL+SWING)) UL = PWMNOMINAL+SWING;
-    Motor_Forward(UL,UR);
+//change constants
+int32_t Kp=18;  // proportional controller gain //was 18,   30
+int32_t Ki=0;  // integral controller gain      //was 0 ,   0
+int32_t Kd=3;  // derivtive controller gain     //was 3 ,   2
+int32_t PWMNOMINAL = 6500; // was 2500             //was 5000  7000
+int32_t SWING = 2000; //was 1000                //was 2000  2000
+int32_t SWING_CONSTANT = 60;                    //was 60    70
+#define MAXSWING 2000                           //was 2000
+#define DESIRED 250                             //was 250   100
+int32_t UR, UL;  // PWM duty 0 to 14,998
+int32_t SetPoint = 250; // mm //was 250
+int32_t LeftDistance,CenterDistance,RightDistance; // mm
 
-  }
+//#define PWMNOMINAL 5000 // was 2500
+//#define SWING 2000 //was 1000
+//#define PWMMIN (PWMNOMINAL-SWING)
+//#define PWMMAX (PWMNOMINAL+SWING)
+
+int32_t errorL;
+int32_t errorR;
+int32_t perrorL = 0;
+int32_t perrorR = 0;
+int32_t integralL;
+int32_t integralR;
+int32_t derL;
+int32_t derR;
+int32_t der;
+int32_t pError = 0;
+
+void Controller(void){ // runs at 100 Hz
+    if(Mode){
+    //    if((LeftDistance>DESIRED) && (RightDistance>DESIRED)){ // looking for if both are lost go straight
+    //      SetPoint = (LeftDistance+RightDistance)/2;
+    //    } else{
+    //      SetPoint = DESIRED;
+    //    }
+
+
+        if( (LeftDistance >= DESIRED)){ // when going straight is null and left is null
+            SetPoint = (CenterDistance + LeftDistance)/2;             // then go left meaning empty space(CenterDistance >= DESIRED) &&
+        } else if( (RightDistance >= DESIRED)){
+            SetPoint = (CenterDistance + RightDistance)/2;
+        } else {
+            SetPoint = DESIRED;
+        }
+
+
+//        if( (RightDistance >= DESIRED +250) && LeftDistance < DESIRED){
+//                Motor_Forward(8000, 3500);
+//        }
+//            else if((LeftDistance >= DESIRED+250) && (RightDistance < DESIRED )){
+//                Motor_Forward(3500, 8000);
+//              }
+//        else{
+
+            //Calculate Error signals
+            errorL = SetPoint - LeftDistance;
+            errorR = SetPoint - RightDistance;
+
+            integralL += errorL;
+            integralR += errorR;
+
+            derL = errorL - perrorL;
+            derR = errorR - perrorR;
+
+            perrorL = errorL;
+            perrorR = errorR;
+
+            UL = PWMNOMINAL + (Kp *errorL) + (Ki * integralL) + (Kd * derL);
+            UR = PWMNOMINAL + (Kp *errorR) + (Ki * integralR) + (Kd * derR);
+
+            // PWMNOMINAL -> max duty cycle
+            // SWING      -> offset
+
+            // turning right
+            if(UR < (PWMNOMINAL-SWING)){ // <
+                UR = PWMNOMINAL-SWING; // 3,000 to 7,000
+
+
+            }
+
+            // turning left
+            if(UR > (PWMNOMINAL+SWING)){ // >
+                UR = PWMNOMINAL+SWING;
+        //            SWING += SWING_CONSTANT;
+            }
+
+            // turning  left
+            if(UL < (PWMNOMINAL-SWING)){ // <
+                UL = PWMNOMINAL-SWING; // 3,000 to 7,000
+        //            SWING += SWING_CONSTANT;
+            }
+
+            // turning right
+            if(UL > (PWMNOMINAL+SWING)){ // >
+                UL = PWMNOMINAL+SWING;
+        //            SWING += SWING_CONSTANT;
+            }
+            SWING += SWING_CONSTANT;
+            if(SWING <= MAXSWING){
+                SWING = MAXSWING;
+            }
+
+            Motor_Forward(UL,UR);
+//        }
+
+      }
+
 }
 
 void Controller_Right(void){ // runs at 100 Hz
+    PWMNOMINAL = 3500;
+
   if(Mode){
-    if((RightDistance>DESIRED)){
-      SetPoint = (RightDistance)/2;
-    }else{
-      SetPoint = DESIRED;
-    }
+//    if((RightDistance>DESIRED)){
+//      SetPoint = (RightDistance)/2;
+//    }else{
+//      SetPoint = DESIRED;
+//    }
     /*if(LeftDistance < RightDistance ){
       Error = LeftDistance-SetPoint;
     }else {
       Error = SetPoint-RightDistance;
     }*/
 
+    // my thoughts
+
+      if( (LeftDistance >= DESIRED)){ // when going straight is null and left is null
+          SetPoint = (CenterDistance + LeftDistance)/2;             // then go left meaning empty space(CenterDistance >= DESIRED) &&
+      } else if( (RightDistance >= DESIRED)){
+          SetPoint = (CenterDistance + RightDistance)/2;
+      } else {
+          SetPoint = DESIRED;
+      }
+
+
     Error = SetPoint-RightDistance;
     //UR = UR + Ki*Error;      // adjust right motor
-    UR = PWMNOMINAL+Kp*Error; // proportional control
-    UR = UR + Ki*Error;      // adjust right motor
-    UL = PWMNOMINAL-Kp*Error; // proportional control
-    if(UR < (PWMNOMINAL-SWING)) UR = PWMNOMINAL-SWING; // 3,000 to 7,000
-    if(UR > (PWMNOMINAL+SWING)) UR = PWMNOMINAL+SWING;
-    if(UL < (PWMNOMINAL-SWING)) UL = PWMNOMINAL-SWING; // 3,000 to 7,000
-    if(UL > (PWMNOMINAL+SWING)) UL = PWMNOMINAL+SWING;
+    UR = PWMNOMINAL+ 25*Error+ 3*der; // proportional control
+    UR = UR + 1*Error;      // adjust right motor
+    UL = PWMNOMINAL- 25*Error+ 3*der; // proportional control
+    if(UR < (PWMNOMINAL-SWING)){ // <
+                UR = PWMNOMINAL-SWING; // 3,000 to 7,000
+
+
+            }
+
+            // turning left
+            if(UR > (PWMNOMINAL+SWING)){ // >
+                UR = PWMNOMINAL+SWING;
+        //            SWING += SWING_CONSTANT;
+            }
+
+            // turning  left
+            if(UL < (PWMNOMINAL-SWING)){ // <
+                UL = PWMNOMINAL-SWING; // 3,000 to 7,000
+        //            SWING += SWING_CONSTANT;
+            }
+
+            // turning right
+            if(UL > (PWMNOMINAL+SWING)){ // >
+                UL = PWMNOMINAL+SWING;
+        //            SWING += SWING_CONSTANT;
+            }
+            SWING += SWING_CONSTANT;
+            if(SWING <= MAXSWING){
+                SWING = MAXSWING;
+            }
 
     //turns left if the center measurement and right measurement is small enough that we will hit the wall if we don't turn
     if((RightDistance<250) && (CenterDistance <250)){
@@ -286,6 +402,46 @@ void Controller_Right(void){ // runs at 100 Hz
 
   }
 }
+
+
+
+void Controller_Left(void){ // runs at 100 Hz
+  if(Mode){
+    if((LeftDistance>DESIRED)){
+      SetPoint = (LeftDistance)/2;
+    }else{
+      SetPoint = DESIRED;
+    }
+
+    //int der;
+    //int Error;
+    Error = SetPoint-LeftDistance;
+
+    der = Error - pError;
+
+    pError = Error;
+
+    //UR = UR + Ki*Error;      // adjust right motor
+    UL = PWMNOMINAL+ 32*Error + 3*der; // proportional control
+    UL = UL + 1*Error;      // adjust right motor
+    UR = PWMNOMINAL- 32*Error + 3*der; // proportional control
+    if(UR < (PWMNOMINAL-SWING)) UR = PWMNOMINAL-SWING; // 3,000 to 7,000
+    if(UR > (PWMNOMINAL+SWING)) UR = PWMNOMINAL+SWING;
+    if(UL < (PWMNOMINAL-SWING)) UL = PWMNOMINAL-SWING; // 3,000 to 7,000
+    if(UL > (PWMNOMINAL+SWING)) UL = PWMNOMINAL+SWING;
+
+    //turns left if the center measurement and right measurement is small enough that we will hit the wall if we don't turn
+    if((LeftDistance<250) && (CenterDistance <250)){
+        UR = 0;
+        UL = PWMNOMINAL;
+    }
+
+    Motor_Forward(UL,UR);
+
+
+  }
+}
+
 
 void Pause(void){int i;
   while(Bump_Read()){ // wait for release
@@ -690,14 +846,15 @@ int8_t timingVar = 0;
 int8_t input = 0;
 char stringHelper[3];
 uint8_t takeValues = 0;
+int on = 0;
+int control = 0;
 
 int print_To_IoT(/*int argc, char** argv*/)
 {
     takeValues = 0;
 
     uint32_t channel = 1;
-    TimerA0_Init(&function, 5000);   // initialize timer A0 to period of 5000
-    PWM_Init12(5000, 0, 0); // initialize PWM: period = 5000, both duty = 0, direction = straight
+    //TimerA0_Init(&function, 5000);   // initialize timer A0 to period of 5000
     SysTick->LOAD = 0x00FFFFFF;           // maximum reload value
     SysTick->CTRL = 0x00000005;           // enable SysTick with no interrupts
     I2CB1_Init(30); // baud rate = 12MHz/30=400kHz
@@ -862,7 +1019,7 @@ int print_To_IoT(/*int argc, char** argv*/)
     }
     CLI_Write(" Subscribed to uniqueID topic \n\r");
 
-    while(1){
+    //while(1){
         rc = MQTTYield(&hMQTTClient, 10);
        // if (rc != 0) {
          //   CLI_Write(" MQTT failed to yield \n\r");
@@ -871,7 +1028,7 @@ int print_To_IoT(/*int argc, char** argv*/)
 
 
 
-        int rc = 0;
+        //int rc = 0;
 
         //print max speed
         utoa(maxSpeed, stringHelper);
@@ -910,7 +1067,7 @@ int print_To_IoT(/*int argc, char** argv*/)
         rc = MQTTPublish(&hMQTTClient, TRACK_TIME, &msgTrackTime);
 
         //print all distances
-        int i;
+        //int i;
         for(i = 0; i < numMeasurements; i++){
 
             //int rc = 0;
@@ -958,14 +1115,25 @@ int print_To_IoT(/*int argc, char** argv*/)
 
         CLI_Write(" Published unique ID successfully \n\r");
 
+        //break;
 
-    }
+
+    //}
 }
 
 uint16_t timingIntHardware = 0;
 
 void updateIoTValues(){
 
+    /*char command[10];
+    UART0_InString(command, 9);
+
+    if (command[0] == 'S'){
+        on = 0;
+    }
+    if(command[0] == 'F'){
+        on = 1;
+    }*/
     if(takeValues == 1){
         if (timingIntHardware == 163){
         leftDistanceMeasurements[numMeasurements] = LeftDistance;
@@ -986,7 +1154,11 @@ void updateIoTValues(){
         }
     }
 }
+
+uint8_t previousDetect = 1;
+
 void main(void){ // wallFollow wall following implementation
+  previousDetect = 1;
   takeValues = 0;
   int i = 0;
   uint32_t channel = 1;
@@ -996,6 +1168,7 @@ void main(void){ // wallFollow wall following implementation
   Bump_Init();
   //SysTick_Init(48000, 2);          // set up SysTick for 1000 Hz interrupts
   LaunchPad_Init(); // built-in switches and LEDs
+  Reflectance_Init();
   Motor_Init();
   Motor_Stop(); // initialize and stop
   Tachometer_Init();
@@ -1032,21 +1205,39 @@ void main(void){ // wallFollow wall following implementation
   EnableInterrupts();
   takeValues = 1;
   while(1){
+      while((EUSCI_A0->IFG&0x01) == 0){
+          if(on == 0)
+          {
+              char cemt;
+              cemt = UART0_InChar();
+              break;
+          }
     takeValues = 1;
+    //if((EUSCI_A0->IFG&0x01) == 0){break;}
     if(Bump_Read()){ // collision
-      //Mode = 0;
       numCrashed++;
-      //Motor_Stop();
       Motor_Forward(0,0);
       Clock_Delay1ms(500);
-      //Mode = 1;
-      //Motor_Stop();
-      //print_To_IoT();
     }
-    if(numCrashed == 3){
-        print_To_IoT();
-        Motor_Stop();
+    //if((EUSCI_A0->IFG&0x01) == 0){break;}
+    if(on == 0)
+    {
+        Motor_Forward(0,0);
     }
+    //if((EUSCI_A0->IFG&0x01) == 0){break;}
+    if(Reflectance_Read(750) == 0){
+        previousDetect = 0;
+    }
+    //if((EUSCI_A0->IFG&0x01) == 0){break;}
+    else{
+        if(previousDetect == 0){
+            Motor_Stop();
+            print_To_IoT();
+            Pause();
+        }
+        previousDetect = 1;
+    }
+    //if((EUSCI_A0->IFG&0x01) == 0){break;}
     if(TxChannel <= 2){ // 0,1,2 means new data
       if(TxChannel==0){
         if(Amplitudes[0] > 1000){
@@ -1074,7 +1265,20 @@ void main(void){ // wallFollow wall following implementation
       OPT3101_StartMeasurementChannel(channel);
       i = i + 1;
     }
-    Controller_Right();
+    //if((EUSCI_A0->IFG&0x01) == 0){break;}
+    if (on == 1)
+    {
+        if (control == 0){
+            Controller();
+        }
+        else if (control == 1){
+            Controller_Left();
+        }
+        else if (control == 2){
+            Controller_Right();
+        }
+    }
+    //if((EUSCI_A0->IFG&0x01) == 0){break;}
     if(i >= 100){
       i = 0;
       SetCursor(3, 5);
@@ -1084,19 +1288,49 @@ void main(void){ // wallFollow wall following implementation
       SetCursor(3, 7);
       OutUDec(UL); OutChar(','); OutUDec(UR);
     }
+    //if((EUSCI_A0->IFG&0x01) == 0){break;}
 
     Tachometer_Get(&leftTach, &leftDir, &leftSteps, &rightTach, &rightDir, &rightSteps);
+    //if((EUSCI_A0->IFG&0x01) == 0){break;}
     Average_RPM_L = leftTach/800;
+    //if((EUSCI_A0->IFG&0x01) == 0){break;}
     Average_RPM_R = rightTach/800;
+    //if((EUSCI_A0->IFG&0x01) == 0){break;}
     if(Average_RPM_L > maxSpeed){
         maxSpeed = Average_RPM_L;
     }
+    //if((EUSCI_A0->IFG&0x01) == 0){break;}
     if(Average_RPM_R > maxSpeed){
         maxSpeed = Average_RPM_R;
     }
+    //if((EUSCI_A0->IFG&0x01) == 0){break;}
 
 
     WaitForInterrupt();
+  }
+  char character = (char)(EUSCI_A0->RXBUF);
+  if(character == 'F') // 0x460A0D
+  {
+      on = 1;
+  }
+  else if(character == 'S'){ // 0x530A0D
+      on = 0;
+  }
+  else if(character == 'C'){ // 0x430A0D
+      control = 0;
+      LaunchPad_Output(0);
+      LaunchPad_Output(1); // Red
+  }
+  else if(character == 'L'){ // 0x4C0A0D
+      control = 1;
+      LaunchPad_Output(0);
+      LaunchPad_Output(2); // Green
+  }
+  else if(character == 'R'){ // 0x520A0C
+      control = 2;
+      LaunchPad_Output(0);
+      LaunchPad_Output(3); // Blue
+  }
   }
 }
 
